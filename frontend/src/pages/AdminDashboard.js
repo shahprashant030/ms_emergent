@@ -550,16 +550,49 @@ const AdminDashboard = () => {
             <TabsContent value="customers">
               <div className="bg-white p-8 rounded-xl border border-border/50">
                 <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Customer Management</h2>
+                <p className="text-sm text-foreground/60 mb-4">Total Customers: {customers.length} (excluding admins)</p>
                 <div className="space-y-3">
-                  {customers.map((customer) => (
-                    <div key={customer.id} className="p-4 border border-border rounded-lg">
+                  {customers.length === 0 ? (
+                    <div className="text-center py-12 text-foreground/60">No customers yet</div>
+                  ) : (
+                    customers.map((customer) => (
+                      <div key={customer.id} className="p-4 border border-border rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold">{customer.name || 'Unnamed Customer'}</div>
+                            <div className="text-sm text-foreground/60">Phone: {customer.phone}</div>
+                            {customer.email && <div className="text-sm text-foreground/60">Email: {customer.email}</div>}
+                            {customer.address && <div className="text-sm text-foreground/60">Address: {customer.address}</div>}
+                            <div className="text-xs text-foreground/50 mt-1">
+                              Joined: {new Date(customer.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Admins Tab */}
+            <TabsContent value="admins">
+              <div className="bg-white p-8 rounded-xl border border-border/50">
+                <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Admin Management</h2>
+                <p className="text-sm text-foreground/60 mb-4">Total Admins: {admins.length}</p>
+                <div className="space-y-3">
+                  {admins.map((admin) => (
+                    <div key={admin.id} className="p-4 border border-border rounded-lg bg-primary/5">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-semibold">{customer.name || 'Unnamed'}</div>
-                          <div className="text-sm text-foreground/60">Phone: {customer.phone}</div>
-                          {customer.email && <div className="text-sm text-foreground/60">Email: {customer.email}</div>}
+                          <div className="font-semibold flex items-center gap-2">
+                            {admin.name || 'Unnamed Admin'}
+                            <span className="text-xs bg-primary text-white px-2 py-1 rounded">ADMIN</span>
+                          </div>
+                          <div className="text-sm text-foreground/60">Phone: {admin.phone}</div>
+                          {admin.email && <div className="text-sm text-foreground/60">Email: {admin.email}</div>}
                           <div className="text-xs text-foreground/50 mt-1">
-                            Role: {customer.role} | Joined: {new Date(customer.created_at).toLocaleDateString()}
+                            Joined: {new Date(admin.created_at).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
