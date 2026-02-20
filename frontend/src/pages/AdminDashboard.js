@@ -156,9 +156,11 @@ const AdminDashboard = () => {
         is_featured: product.is_featured,
         is_new: product.is_new,
       });
+      setUploadedImages([]);
     } else {
       setEditingProduct(null);
       resetProductForm();
+      setUploadedImages([]);
     }
     setShowProductDialog(true);
   };
