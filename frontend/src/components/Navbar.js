@@ -165,6 +165,11 @@ export const Navbar = () => {
                   {cat.name}
                 </Link>
               ))}
+              {user && user.role === 'admin' && (
+                <Link to="/admin" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenu(false)}>
+                  Admin Dashboard
+                </Link>
+              )}
               {!user && (
                 <Button onClick={() => { setShowAuth(true); setMobileMenu(false); }} className="w-full bg-primary text-white rounded-full">
                   Login
