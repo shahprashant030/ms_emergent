@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Package, ShoppingCart, Users, DollarSign } from 'lucide-react';
+import { Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Plus } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -19,8 +20,14 @@ const AdminDashboard = () => {
   const { user, token, loading: authLoading } = useAuth();
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
-  const [showProductForm, setShowProductForm] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Product Form
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
     name: '',
     slug: '',
@@ -28,14 +35,23 @@ const AdminDashboard = () => {
     short_description: '',
     categories: '',
     price: '',
+    discount_price: '',
     stock: '',
     images: '',
     is_featured: false,
     is_new: false,
   });
 
+  // Category Form
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    image: '',
+  });
+
   useEffect(() => {
-    // Wait for auth to finish loading
     if (authLoading) return;
     
     if (!user) {
@@ -55,14 +71,19 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [statsRes, ordersRes] = await Promise.all([
+      const [statsRes, ordersRes, productsRes, categoriesRes] = await Promise.all([
         axios.get(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/admin/orders`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/products`),
+        axios.get(`${API}/categories`),
       ]);
       setStats(statsRes.data);
       setOrders(ordersRes.data);
+      setProducts(productsRes.data);
+      setCategories(categoriesRes.data);
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
+      toast.error('Failed to load admin data');
     } finally {
       setLoading(false);
     }
@@ -78,6 +99,7 @@ const AdminDashboard = () => {
         categories: productForm.categories.split(',').map((c) => c.trim()),
         images: productForm.images.split(',').map((img) => img.trim()),
         price: parseFloat(productForm.price),
+        discount_price: productForm.discount_price ? parseFloat(productForm.discount_price) : null,
         stock: parseInt(productForm.stock),
       };
 
@@ -87,18 +109,7 @@ const AdminDashboard = () => {
 
       toast.success('Product created successfully');
       setShowProductForm(false);
-      setProductForm({
-        name: '',
-        slug: '',
-        description: '',
-        short_description: '',
-        categories: '',
-        price: '',
-        stock: '',
-        images: '',
-        is_featured: false,
-        is_new: false,
-      });
+      resetProductForm();
       fetchData();
     } catch (error) {
       console.error('Failed to create product:', error);
@@ -106,6 +117,44 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await axios.post(`${API}/categories`, categoryForm, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success('Category created successfully');
+      setShowCategoryForm(false);
+      setCategoryForm({ name: '', slug: '', description: '', image: '' });
+      fetchData();
+    } catch (error) {
+      console.error('Failed to create category:', error);
+      toast.error('Failed to create category');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetProductForm = () => {
+    setProductForm({
+      name: '',
+      slug: '',
+      description: '',
+      short_description: '',
+      categories: '',
+      price: '',
+      discount_price: '',
+      stock: '',
+      images: '',
+      is_featured: false,
+      is_new: false,
+    });
+    setEditingProduct(null);
   };
 
   const handleUpdateOrderStatus = async (orderId, status) => {
@@ -202,196 +251,255 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* Create Product Button */}
-          <div className="mb-8">
-            <Button
-              onClick={() => setShowProductForm(!showProductForm)}
-              className="bg-primary hover:bg-primary/90 text-white rounded-full px-6"
-              data-testid="toggle-product-form"
-            >
-              {showProductForm ? 'Cancel' : 'Create New Product'}
-            </Button>
-          </div>
+          {/* Tabs for different sections */}
+          <Tabs defaultValue="products" className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-8">
+              <TabsTrigger value="products">Products</TabsTrigger>
+              <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="orders">Orders</TabsTrigger>
+              <TabsTrigger value="customers">Customers</TabsTrigger>
+              <TabsTrigger value="carousel">Carousel</TabsTrigger>
+            </TabsList>
 
-          {/* Product Form */}
-          {showProductForm && (
-            <div className="bg-white p-8 rounded-xl border border-border/50 mb-12">
-              <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Create New Product</h2>
-              <form onSubmit={handleCreateProduct} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="name">Product Name *</Label>
-                    <Input
-                      id="name"
-                      value={productForm.name}
-                      onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                      required
-                      className="rounded-lg mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="slug">Slug *</Label>
-                    <Input
-                      id="slug"
-                      value={productForm.slug}
-                      onChange={(e) => setProductForm({ ...productForm, slug: e.target.value })}
-                      required
-                      className="rounded-lg mt-2"
-                    />
-                  </div>
+            {/* Products Tab */}
+            <TabsContent value="products">
+              <div className="bg-white p-8 rounded-xl border border-border/50">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-heading font-semibold text-primary">Manage Products</h2>
+                  <Button
+                    onClick={() => setShowProductForm(!showProductForm)}
+                    className="bg-primary hover:bg-primary/90 text-white rounded-full px-6"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {showProductForm ? 'Cancel' : 'Add Product'}
+                  </Button>
                 </div>
 
-                <div>
-                  <Label htmlFor="short_description">Short Description</Label>
-                  <Input
-                    id="short_description"
-                    value={productForm.short_description}
-                    onChange={(e) => setProductForm({ ...productForm, short_description: e.target.value })}
-                    className="rounded-lg mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea
-                    id="description"
-                    value={productForm.description}
-                    onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                    required
-                    rows={4}
-                    className="rounded-lg mt-2"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="price">Price (NPR) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      value={productForm.price}
-                      onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                      required
-                      className="rounded-lg mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="stock">Stock *</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      value={productForm.stock}
-                      onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
-                      required
-                      className="rounded-lg mt-2"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="categories">Categories (comma-separated)</Label>
-                  <Input
-                    id="categories"
-                    value={productForm.categories}
-                    onChange={(e) => setProductForm({ ...productForm, categories: e.target.value })}
-                    placeholder="sweets, groceries"
-                    className="rounded-lg mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="images">Image URLs (comma-separated) *</Label>
-                  <Textarea
-                    id="images"
-                    value={productForm.images}
-                    onChange={(e) => setProductForm({ ...productForm, images: e.target.value })}
-                    required
-                    rows={3}
-                    className="rounded-lg mt-2"
-                  />
-                </div>
-
-                <div className="flex gap-6">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={productForm.is_featured}
-                      onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })}
-                      className="rounded"
-                    />
-                    <span>Featured Product</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={productForm.is_new}
-                      onChange={(e) => setProductForm({ ...productForm, is_new: e.target.checked })}
-                      className="rounded"
-                    />
-                    <span>New Arrival</span>
-                  </label>
-                </div>
-
-                <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8" data-testid="create-product-button">
-                  {loading ? 'Creating...' : 'Create Product'}
-                </Button>
-              </form>
-            </div>
-          )}
-
-          {/* Orders Management */}
-          <div className="bg-white p-8 rounded-xl border border-border/50">
-            <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Recent Orders</h2>
-            <div className="space-y-4">
-              {orders.length === 0 ? (
-                <div className="text-center py-12 text-foreground/60">No orders yet</div>
-              ) : (
-                orders.map((order) => (
-                  <div key={order.id} className="p-6 border border-border/50 rounded-lg space-y-4" data-testid={`admin-order-${order.id}`}>
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {showProductForm && (
+                  <form onSubmit={handleCreateProduct} className="mb-8 p-6 border border-border rounded-lg space-y-4">
+                    <h3 className="text-lg font-semibold mb-4">Create New Product</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <div className="font-semibold text-foreground">Order #{order.order_number}</div>
-                        <div className="text-sm text-foreground/60">{order.name} - {order.phone}</div>
-                        <div className="text-sm text-foreground/60 mt-1">
-                          {new Date(order.created_at).toLocaleDateString()}
+                        <Label>Product Name *</Label>
+                        <Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required className="mt-2" />
+                      </div>
+                      <div>
+                        <Label>Slug *</Label>
+                        <Input value={productForm.slug} onChange={(e) => setProductForm({ ...productForm, slug: e.target.value })} required className="mt-2" />
+                      </div>
+                      <div>
+                        <Label>Price (NPR) *</Label>
+                        <Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required className="mt-2" />
+                      </div>
+                      <div>
+                        <Label>Discount Price (NPR)</Label>
+                        <Input type="number" step="0.01" value={productForm.discount_price} onChange={(e) => setProductForm({ ...productForm, discount_price: e.target.value })} className="mt-2" />
+                      </div>
+                      <div>
+                        <Label>Stock *</Label>
+                        <Input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} required className="mt-2" />
+                      </div>
+                      <div>
+                        <Label>Categories (comma-separated)</Label>
+                        <Input value={productForm.categories} onChange={(e) => setProductForm({ ...productForm, categories: e.target.value })} placeholder="food, groceries" className="mt-2" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Short Description</Label>
+                      <Input value={productForm.short_description} onChange={(e) => setProductForm({ ...productForm, short_description: e.target.value })} className="mt-2" />
+                    </div>
+                    <div>
+                      <Label>Description *</Label>
+                      <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} required rows={3} className="mt-2" />
+                    </div>
+                    <div>
+                      <Label>Image URLs (comma-separated) *</Label>
+                      <Textarea value={productForm.images} onChange={(e) => setProductForm({ ...productForm, images: e.target.value })} required rows={2} className="mt-2" />
+                    </div>
+                    <div className="flex gap-4">
+                      <label className="flex items-center space-x-2">
+                        <input type="checkbox" checked={productForm.is_featured} onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })} />
+                        <span>Featured</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input type="checkbox" checked={productForm.is_new} onChange={(e) => setProductForm({ ...productForm, is_new: e.target.checked })} />
+                        <span>New Arrival</span>
+                      </label>
+                    </div>
+                    <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
+                      {loading ? 'Creating...' : 'Create Product'}
+                    </Button>
+                  </form>
+                )}
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Existing Products ({products.length})</h3>
+                  <div className="grid grid-cols-1 gap-4">
+                    {products.map((product) => (
+                      <div key={product.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <img src={product.images[0]} alt={product.name} className="w-16 h-16 object-cover rounded" />
+                          <div>
+                            <div className="font-semibold">{product.name}</div>
+                            <div className="text-sm text-foreground/60">NPR {product.price} | Stock: {product.stock}</div>
+                            <div className="text-xs text-foreground/50">{product.categories.join(', ')}</div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" className="rounded-lg">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="sm" className="rounded-lg text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold text-primary">NPR {order.total.toFixed(2)}</div>
-                        <div className="text-sm text-foreground/60">{order.payment_method}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-grow">
-                        <div className="text-sm text-foreground/60">Items: {order.items.length}</div>
-                        <div className="text-sm text-foreground/60">Address: {order.shipping_address}</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Select
-                          value={order.order_status}
-                          onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
-                        >
-                          <SelectTrigger className="w-[180px] rounded-lg" data-testid={`status-select-${order.id}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="confirmed">Confirmed</SelectItem>
-                            <SelectItem value="packed">Packed</SelectItem>
-                            <SelectItem value="shipped">Shipped</SelectItem>
-                            <SelectItem value="delivered">Delivered</SelectItem>
-                            <SelectItem value="cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))
-              )}
-            </div>
-          </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Categories Tab */}
+            <TabsContent value="categories">
+              <div className="bg-white p-8 rounded-xl border border-border/50">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-heading font-semibold text-primary">Manage Categories</h2>
+                  <Button
+                    onClick={() => setShowCategoryForm(!showCategoryForm)}
+                    className="bg-primary hover:bg-primary/90 text-white rounded-full px-6"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {showCategoryForm ? 'Cancel' : 'Add Category'}
+                  </Button>
+                </div>
+
+                {showCategoryForm && (
+                  <form onSubmit={handleCreateCategory} className="mb-8 p-6 border border-border rounded-lg space-y-4">
+                    <h3 className="text-lg font-semibold mb-4">Create New Category</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Category Name *</Label>
+                        <Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} required className="mt-2" />
+                      </div>
+                      <div>
+                        <Label>Slug *</Label>
+                        <Input value={categoryForm.slug} onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })} required className="mt-2" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Description</Label>
+                      <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} rows={2} className="mt-2" />
+                    </div>
+                    <div>
+                      <Label>Image URL</Label>
+                      <Input value={categoryForm.image} onChange={(e) => setCategoryForm({ ...categoryForm, image: e.target.value })} className="mt-2" />
+                    </div>
+                    <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
+                      {loading ? 'Creating...' : 'Create Category'}
+                    </Button>
+                  </form>
+                )}
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Existing Categories ({categories.length})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {categories.map((category) => (
+                      <div key={category.id} className="p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-semibold text-lg">{category.name}</div>
+                            <div className="text-sm text-foreground/60">{category.slug}</div>
+                            {category.description && <div className="text-sm text-foreground/50 mt-1">{category.description}</div>}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button variant="outline" size="sm" className="rounded-lg">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="outline" size="sm" className="rounded-lg text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Orders Tab */}
+            <TabsContent value="orders">
+              <div className="bg-white p-8 rounded-xl border border-border/50">
+                <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Recent Orders</h2>
+                <div className="space-y-4">
+                  {orders.length === 0 ? (
+                    <div className="text-center py-12 text-foreground/60">No orders yet</div>
+                  ) : (
+                    orders.map((order) => (
+                      <div key={order.id} className="p-6 border border-border/50 rounded-lg space-y-4">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div>
+                            <div className="font-semibold text-foreground">Order #{order.order_number}</div>
+                            <div className="text-sm text-foreground/60">{order.name} - {order.phone}</div>
+                            <div className="text-sm text-foreground/60 mt-1">{new Date(order.created_at).toLocaleDateString()}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-bold text-primary">NPR {order.total.toFixed(2)}</div>
+                            <div className="text-sm text-foreground/60">{order.payment_method}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          <div className="flex-grow">
+                            <div className="text-sm text-foreground/60">Items: {order.items.length}</div>
+                            <div className="text-sm text-foreground/60">Address: {order.shipping_address}</div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Select value={order.order_status} onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}>
+                              <SelectTrigger className="w-[180px] rounded-lg">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                <SelectItem value="packed">Packed</SelectItem>
+                                <SelectItem value="shipped">Shipped</SelectItem>
+                                <SelectItem value="delivered">Delivered</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Customers Tab */}
+            <TabsContent value="customers">
+              <div className="bg-white p-8 rounded-xl border border-border/50">
+                <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Customer Management</h2>
+                <p className="text-foreground/60 mb-4">Total Customers: {stats?.total_users || 0}</p>
+                <div className="text-center py-12 text-foreground/60">
+                  Customer list view - Coming soon
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Carousel Tab */}
+            <TabsContent value="carousel">
+              <div className="bg-white p-8 rounded-xl border border-border/50">
+                <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Carousel Management</h2>
+                <p className="text-foreground/60 mb-4">Manage hero carousel slides</p>
+                <div className="text-center py-12 text-foreground/60">
+                  Carousel management - Coming soon
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
