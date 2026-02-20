@@ -55,10 +55,13 @@ const ProductsPage = () => {
 
   const categories = [
     { name: 'All', slug: null },
-    { name: 'Sweets', slug: 'sweets' },
+    { name: 'Food', slug: 'food' },
     { name: 'Groceries', slug: 'groceries' },
-    { name: 'Clothing', slug: 'clothing' },
-    { name: 'Handicrafts', slug: 'handicrafts' },
+    { name: 'Pickles', slug: 'achar' },
+    { name: 'Mithai', slug: 'mithai' },
+    { name: 'Clothes', slug: 'clothes' },
+    { name: 'Others', slug: 'others' },
+    { name: 'Art', slug: 'art' },
   ];
 
   return (
