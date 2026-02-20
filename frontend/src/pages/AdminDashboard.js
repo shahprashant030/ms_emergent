@@ -16,7 +16,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user, token, loading: authLoading } = useAuth();
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
   const [showProductForm, setShowProductForm] = useState(false);
@@ -35,13 +35,23 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
+    if (!user) {
+      toast.error('Please login to access admin dashboard');
+      navigate('/');
+      return;
+    }
+    
+    if (user.role !== 'admin') {
       toast.error('Admin access required');
       navigate('/');
       return;
     }
+    
     fetchData();
-  }, [user]);
+  }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
     try {
