@@ -99,6 +99,46 @@ const AdminDashboard = () => {
     }
   };
 
+  // Image Upload Function
+  const handleImageUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImage(true);
+    const uploadedUrls = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append('file', files[i]);
+
+        const response = await axios.post(`${API}/upload-image`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        const fullUrl = `${process.env.REACT_APP_BACKEND_URL}${response.data.url}`;
+        uploadedUrls.push(fullUrl);
+      }
+
+      setUploadedImages([...uploadedImages, ...uploadedUrls]);
+      
+      // Add uploaded URLs to the images field
+      const currentImages = productForm.images ? productForm.images.split(',').map(s => s.trim()).filter(s => s) : [];
+      const newImages = [...currentImages, ...uploadedUrls];
+      setProductForm({ ...productForm, images: newImages.join(', ') });
+
+      toast.success(`${uploadedUrls.length} image(s) uploaded successfully`);
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   // Product Functions
   const openProductDialog = (product = null) => {
     if (product) {
