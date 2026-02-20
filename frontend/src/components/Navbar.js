@@ -101,7 +101,7 @@ export const Navbar = () => {
                 </Button>
               )}
 
-              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenu(!mobileMenu)}>
+              <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenu(!mobileMenu)} data-testid="mobile-menu-button">
                 <Menu className="h-5 w-5" />
               </Button>
             </div>
