@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Plus } from 'lucide-react';
+import { Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Plus, X } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -23,10 +24,10 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   
   // Product Form
-  const [showProductForm, setShowProductForm] = useState(false);
+  const [showProductDialog, setShowProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [productForm, setProductForm] = useState({
     name: '',
@@ -43,7 +44,8 @@ const AdminDashboard = () => {
   });
 
   // Category Form
-  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     slug: '',
@@ -70,17 +72,20 @@ const AdminDashboard = () => {
   }, [user, authLoading, navigate]);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      const [statsRes, ordersRes, productsRes, categoriesRes] = await Promise.all([
+      const [statsRes, ordersRes, productsRes, categoriesRes, usersRes] = await Promise.all([
         axios.get(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/admin/orders`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/products`),
         axios.get(`${API}/categories`),
+        axios.get(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setStats(statsRes.data);
       setOrders(ordersRes.data);
       setProducts(productsRes.data);
       setCategories(categoriesRes.data);
+      setCustomers(usersRes.data);
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
       toast.error('Failed to load admin data');
@@ -89,55 +94,28 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleCreateProduct = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const productData = {
-        ...productForm,
-        categories: productForm.categories.split(',').map((c) => c.trim()),
-        images: productForm.images.split(',').map((img) => img.trim()),
-        price: parseFloat(productForm.price),
-        discount_price: productForm.discount_price ? parseFloat(productForm.discount_price) : null,
-        stock: parseInt(productForm.stock),
-      };
-
-      await axios.post(`${API}/products`, productData, {
-        headers: { Authorization: `Bearer ${token}` },
+  // Product Functions
+  const openProductDialog = (product = null) => {
+    if (product) {
+      setEditingProduct(product);
+      setProductForm({
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        short_description: product.short_description || '',
+        categories: product.categories.join(', '),
+        price: product.price.toString(),
+        discount_price: product.discount_price ? product.discount_price.toString() : '',
+        stock: product.stock.toString(),
+        images: product.images.join(', '),
+        is_featured: product.is_featured,
+        is_new: product.is_new,
       });
-
-      toast.success('Product created successfully');
-      setShowProductForm(false);
+    } else {
+      setEditingProduct(null);
       resetProductForm();
-      fetchData();
-    } catch (error) {
-      console.error('Failed to create product:', error);
-      toast.error('Failed to create product');
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const handleCreateCategory = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await axios.post(`${API}/categories`, categoryForm, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      toast.success('Category created successfully');
-      setShowCategoryForm(false);
-      setCategoryForm({ name: '', slug: '', description: '', image: '' });
-      fetchData();
-    } catch (error) {
-      console.error('Failed to create category:', error);
-      toast.error('Failed to create category');
-    } finally {
-      setLoading(false);
-    }
+    setShowProductDialog(true);
   };
 
   const resetProductForm = () => {
@@ -154,7 +132,131 @@ const AdminDashboard = () => {
       is_featured: false,
       is_new: false,
     });
-    setEditingProduct(null);
+  };
+
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const productData = {
+        name: productForm.name,
+        slug: productForm.slug,
+        description: productForm.description,
+        short_description: productForm.short_description || null,
+        categories: productForm.categories.split(',').map((c) => c.trim()).filter(c => c),
+        images: productForm.images.split(',').map((img) => img.trim()).filter(img => img),
+        price: parseFloat(productForm.price),
+        discount_price: productForm.discount_price ? parseFloat(productForm.discount_price) : null,
+        stock: parseInt(productForm.stock),
+        is_featured: productForm.is_featured,
+        is_new: productForm.is_new,
+      };
+
+      if (editingProduct) {
+        await axios.put(`${API}/products/${editingProduct.id}`, productData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success('Product updated successfully');
+      } else {
+        await axios.post(`${API}/products`, productData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success('Product created successfully');
+      }
+
+      setShowProductDialog(false);
+      resetProductForm();
+      setEditingProduct(null);
+      fetchData();
+    } catch (error) {
+      console.error('Failed to save product:', error);
+      toast.error(error.response?.data?.detail || 'Failed to save product');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId, productName) => {
+    if (!window.confirm(`Are you sure you want to delete "${productName}"?`)) return;
+
+    setLoading(true);
+    try {
+      await axios.delete(`${API}/products/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Product deleted successfully');
+      fetchData();
+    } catch (error) {
+      console.error('Failed to delete product:', error);
+      toast.error('Failed to delete product');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Category Functions
+  const openCategoryDialog = (category = null) => {
+    if (category) {
+      setEditingCategory(category);
+      setCategoryForm({
+        name: category.name,
+        slug: category.slug,
+        description: category.description || '',
+        image: category.image || '',
+      });
+    } else {
+      setEditingCategory(null);
+      setCategoryForm({ name: '', slug: '', description: '', image: '' });
+    }
+    setShowCategoryDialog(true);
+  };
+
+  const handleSaveCategory = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (editingCategory) {
+        await axios.put(`${API}/categories/${editingCategory.id}`, categoryForm, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success('Category updated successfully');
+      } else {
+        await axios.post(`${API}/categories`, categoryForm, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success('Category created successfully');
+      }
+
+      setShowCategoryDialog(false);
+      setCategoryForm({ name: '', slug: '', description: '', image: '' });
+      setEditingCategory(null);
+      fetchData();
+    } catch (error) {
+      console.error('Failed to save category:', error);
+      toast.error(error.response?.data?.detail || 'Failed to save category');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId, categoryName) => {
+    if (!window.confirm(`Are you sure you want to delete "${categoryName}"?`)) return;
+
+    setLoading(true);
+    try {
+      await axios.delete(`${API}/categories/${categoryId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Category deleted successfully');
+      fetchData();
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+      toast.error('Failed to delete category');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleUpdateOrderStatus = async (orderId, status) => {
@@ -162,9 +264,7 @@ const AdminDashboard = () => {
       await axios.put(
         `${API}/admin/orders/${orderId}/status?new_status=${status}`,
         null,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Order status updated');
       fetchData();
@@ -174,7 +274,7 @@ const AdminDashboard = () => {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || (loading && !stats)) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -187,17 +287,6 @@ const AdminDashboard = () => {
 
   if (!user || user.role !== 'admin') return null;
 
-  if (loading && !stats) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-grow flex items-center justify-center">
-          <div className="text-xl text-foreground/60">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col" data-testid="admin-dashboard">
       <Navbar />
@@ -209,17 +298,17 @@ const AdminDashboard = () => {
           {/* Stats */}
           {stats && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              <div className="bg-white p-6 rounded-xl border border-border/50" data-testid="stat-products">
+              <div className="bg-white p-6 rounded-xl border border-border/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm text-foreground/60">Total Products</div>
-                    <div className="text-3xl font-bold text-primary mt-2">{stats.total_products}</div>
+                    <div className="text-3xl font-bold text-primary mt-2">{products.length}</div>
                   </div>
                   <Package className="h-12 w-12 text-primary/20" />
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-xl border border-border/50" data-testid="stat-orders">
+              <div className="bg-white p-6 rounded-xl border border-border/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm text-foreground/60">Total Orders</div>
@@ -229,7 +318,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-xl border border-border/50" data-testid="stat-users">
+              <div className="bg-white p-6 rounded-xl border border-border/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm text-foreground/60">Total Users</div>
@@ -239,7 +328,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-xl border border-border/50" data-testid="stat-revenue">
+              <div className="bg-white p-6 rounded-xl border border-border/50">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm text-foreground/60">Total Revenue</div>
@@ -251,14 +340,13 @@ const AdminDashboard = () => {
             </div>
           )}
 
-          {/* Tabs for different sections */}
+          {/* Tabs */}
           <Tabs defaultValue="products" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 mb-8">
-              <TabsTrigger value="products">Products</TabsTrigger>
-              <TabsTrigger value="categories">Categories</TabsTrigger>
-              <TabsTrigger value="orders">Orders</TabsTrigger>
-              <TabsTrigger value="customers">Customers</TabsTrigger>
-              <TabsTrigger value="carousel">Carousel</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 mb-8">
+              <TabsTrigger value="products">Products ({products.length})</TabsTrigger>
+              <TabsTrigger value="categories">Categories ({categories.length})</TabsTrigger>
+              <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
+              <TabsTrigger value="customers">Customers ({customers.length})</TabsTrigger>
             </TabsList>
 
             {/* Products Tab */}
@@ -267,95 +355,47 @@ const AdminDashboard = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-heading font-semibold text-primary">Manage Products</h2>
                   <Button
-                    onClick={() => setShowProductForm(!showProductForm)}
+                    onClick={() => openProductDialog()}
                     className="bg-primary hover:bg-primary/90 text-white rounded-full px-6"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {showProductForm ? 'Cancel' : 'Add Product'}
+                    Add Product
                   </Button>
                 </div>
 
-                {showProductForm && (
-                  <form onSubmit={handleCreateProduct} className="mb-8 p-6 border border-border rounded-lg space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Create New Product</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Product Name *</Label>
-                        <Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required className="mt-2" />
-                      </div>
-                      <div>
-                        <Label>Slug *</Label>
-                        <Input value={productForm.slug} onChange={(e) => setProductForm({ ...productForm, slug: e.target.value })} required className="mt-2" />
-                      </div>
-                      <div>
-                        <Label>Price (NPR) *</Label>
-                        <Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required className="mt-2" />
-                      </div>
-                      <div>
-                        <Label>Discount Price (NPR)</Label>
-                        <Input type="number" step="0.01" value={productForm.discount_price} onChange={(e) => setProductForm({ ...productForm, discount_price: e.target.value })} className="mt-2" />
-                      </div>
-                      <div>
-                        <Label>Stock *</Label>
-                        <Input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} required className="mt-2" />
-                      </div>
-                      <div>
-                        <Label>Categories (comma-separated)</Label>
-                        <Input value={productForm.categories} onChange={(e) => setProductForm({ ...productForm, categories: e.target.value })} placeholder="food, groceries" className="mt-2" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Short Description</Label>
-                      <Input value={productForm.short_description} onChange={(e) => setProductForm({ ...productForm, short_description: e.target.value })} className="mt-2" />
-                    </div>
-                    <div>
-                      <Label>Description *</Label>
-                      <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} required rows={3} className="mt-2" />
-                    </div>
-                    <div>
-                      <Label>Image URLs (comma-separated) *</Label>
-                      <Textarea value={productForm.images} onChange={(e) => setProductForm({ ...productForm, images: e.target.value })} required rows={2} className="mt-2" />
-                    </div>
-                    <div className="flex gap-4">
-                      <label className="flex items-center space-x-2">
-                        <input type="checkbox" checked={productForm.is_featured} onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })} />
-                        <span>Featured</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input type="checkbox" checked={productForm.is_new} onChange={(e) => setProductForm({ ...productForm, is_new: e.target.checked })} />
-                        <span>New Arrival</span>
-                      </label>
-                    </div>
-                    <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
-                      {loading ? 'Creating...' : 'Create Product'}
-                    </Button>
-                  </form>
-                )}
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Existing Products ({products.length})</h3>
-                  <div className="grid grid-cols-1 gap-4">
-                    {products.map((product) => (
-                      <div key={product.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <img src={product.images[0]} alt={product.name} className="w-16 h-16 object-cover rounded" />
-                          <div>
-                            <div className="font-semibold">{product.name}</div>
-                            <div className="text-sm text-foreground/60">NPR {product.price} | Stock: {product.stock}</div>
-                            <div className="text-xs text-foreground/50">{product.categories.join(', ')}</div>
+                <div className="space-y-3">
+                  {products.map((product) => (
+                    <div key={product.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
+                      <div className="flex items-center gap-4">
+                        <img src={product.images[0]} alt={product.name} className="w-16 h-16 object-cover rounded" />
+                        <div>
+                          <div className="font-semibold">{product.name}</div>
+                          <div className="text-sm text-foreground/60">
+                            NPR {product.discount_price || product.price} | Stock: {product.stock}
                           </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="rounded-lg">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm" className="rounded-lg text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <div className="text-xs text-foreground/50">{product.categories.join(', ')}</div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg"
+                          onClick={() => openProductDialog(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteProduct(product.id, product.name)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </TabsContent>
@@ -366,64 +406,44 @@ const AdminDashboard = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-heading font-semibold text-primary">Manage Categories</h2>
                   <Button
-                    onClick={() => setShowCategoryForm(!showCategoryForm)}
+                    onClick={() => openCategoryDialog()}
                     className="bg-primary hover:bg-primary/90 text-white rounded-full px-6"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {showCategoryForm ? 'Cancel' : 'Add Category'}
+                    Add Category
                   </Button>
                 </div>
 
-                {showCategoryForm && (
-                  <form onSubmit={handleCreateCategory} className="mb-8 p-6 border border-border rounded-lg space-y-4">
-                    <h3 className="text-lg font-semibold mb-4">Create New Category</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Category Name *</Label>
-                        <Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} required className="mt-2" />
-                      </div>
-                      <div>
-                        <Label>Slug *</Label>
-                        <Input value={categoryForm.slug} onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })} required className="mt-2" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Description</Label>
-                      <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} rows={2} className="mt-2" />
-                    </div>
-                    <div>
-                      <Label>Image URL</Label>
-                      <Input value={categoryForm.image} onChange={(e) => setCategoryForm({ ...categoryForm, image: e.target.value })} className="mt-2" />
-                    </div>
-                    <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
-                      {loading ? 'Creating...' : 'Create Category'}
-                    </Button>
-                  </form>
-                )}
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Existing Categories ({categories.length})</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {categories.map((category) => (
-                      <div key={category.id} className="p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-semibold text-lg">{category.name}</div>
-                            <div className="text-sm text-foreground/60">{category.slug}</div>
-                            {category.description && <div className="text-sm text-foreground/50 mt-1">{category.description}</div>}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm" className="rounded-lg">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" className="rounded-lg text-destructive">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {categories.map((category) => (
+                    <div key={category.id} className="p-4 border border-border rounded-lg hover:border-primary/30 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold text-lg">{category.name}</div>
+                          <div className="text-sm text-foreground/60">{category.slug}</div>
+                          {category.description && <div className="text-sm text-foreground/50 mt-1">{category.description}</div>}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-lg"
+                            onClick={() => openCategoryDialog(category)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-lg text-destructive hover:bg-destructive/10"
+                            onClick={() => handleDeleteCategory(category.id, category.name)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </TabsContent>
@@ -431,7 +451,7 @@ const AdminDashboard = () => {
             {/* Orders Tab */}
             <TabsContent value="orders">
               <div className="bg-white p-8 rounded-xl border border-border/50">
-                <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Recent Orders</h2>
+                <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Order Management</h2>
                 <div className="space-y-4">
                   {orders.length === 0 ? (
                     <div className="text-center py-12 text-foreground/60">No orders yet</div>
@@ -482,26 +502,135 @@ const AdminDashboard = () => {
             <TabsContent value="customers">
               <div className="bg-white p-8 rounded-xl border border-border/50">
                 <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Customer Management</h2>
-                <p className="text-foreground/60 mb-4">Total Customers: {stats?.total_users || 0}</p>
-                <div className="text-center py-12 text-foreground/60">
-                  Customer list view - Coming soon
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* Carousel Tab */}
-            <TabsContent value="carousel">
-              <div className="bg-white p-8 rounded-xl border border-border/50">
-                <h2 className="text-2xl font-heading font-semibold text-primary mb-6">Carousel Management</h2>
-                <p className="text-foreground/60 mb-4">Manage hero carousel slides</p>
-                <div className="text-center py-12 text-foreground/60">
-                  Carousel management - Coming soon
+                <div className="space-y-3">
+                  {customers.map((customer) => (
+                    <div key={customer.id} className="p-4 border border-border rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-semibold">{customer.name || 'Unnamed'}</div>
+                          <div className="text-sm text-foreground/60">Phone: {customer.phone}</div>
+                          {customer.email && <div className="text-sm text-foreground/60">Email: {customer.email}</div>}
+                          <div className="text-xs text-foreground/50 mt-1">
+                            Role: {customer.role} | Joined: {new Date(customer.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {/* Product Dialog */}
+      <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-heading text-primary">
+              {editingProduct ? 'Edit Product' : 'Create New Product'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveProduct} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Product Name *</Label>
+                <Input value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required className="mt-2" />
+              </div>
+              <div>
+                <Label>Slug *</Label>
+                <Input value={productForm.slug} onChange={(e) => setProductForm({ ...productForm, slug: e.target.value })} required className="mt-2" />
+              </div>
+              <div>
+                <Label>Price (NPR) *</Label>
+                <Input type="number" step="0.01" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required className="mt-2" />
+              </div>
+              <div>
+                <Label>Discount Price (NPR)</Label>
+                <Input type="number" step="0.01" value={productForm.discount_price} onChange={(e) => setProductForm({ ...productForm, discount_price: e.target.value })} className="mt-2" />
+              </div>
+              <div>
+                <Label>Stock *</Label>
+                <Input type="number" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} required className="mt-2" />
+              </div>
+              <div>
+                <Label>Categories (comma-separated)</Label>
+                <Input value={productForm.categories} onChange={(e) => setProductForm({ ...productForm, categories: e.target.value })} placeholder="food, groceries" className="mt-2" />
+              </div>
+            </div>
+            <div>
+              <Label>Short Description</Label>
+              <Input value={productForm.short_description} onChange={(e) => setProductForm({ ...productForm, short_description: e.target.value })} className="mt-2" />
+            </div>
+            <div>
+              <Label>Description *</Label>
+              <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} required rows={3} className="mt-2" />
+            </div>
+            <div>
+              <Label>Image URLs (comma-separated) *</Label>
+              <Textarea value={productForm.images} onChange={(e) => setProductForm({ ...productForm, images: e.target.value })} required rows={2} className="mt-2" placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg" />
+            </div>
+            <div className="flex gap-4">
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" checked={productForm.is_featured} onChange={(e) => setProductForm({ ...productForm, is_featured: e.target.checked })} />
+                <span>Featured</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input type="checkbox" checked={productForm.is_new} onChange={(e) => setProductForm({ ...productForm, is_new: e.target.checked })} />
+                <span>New Arrival</span>
+              </label>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
+                {loading ? 'Saving...' : (editingProduct ? 'Update Product' : 'Create Product')}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setShowProductDialog(false)} className="rounded-full px-8">
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Dialog */}
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-heading text-primary">
+              {editingCategory ? 'Edit Category' : 'Create New Category'}
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSaveCategory} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Category Name *</Label>
+                <Input value={categoryForm.name} onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })} required className="mt-2" />
+              </div>
+              <div>
+                <Label>Slug *</Label>
+                <Input value={categoryForm.slug} onChange={(e) => setCategoryForm({ ...categoryForm, slug: e.target.value })} required className="mt-2" />
+              </div>
+            </div>
+            <div>
+              <Label>Description</Label>
+              <Textarea value={categoryForm.description} onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })} rows={2} className="mt-2" />
+            </div>
+            <div>
+              <Label>Image URL</Label>
+              <Input value={categoryForm.image} onChange={(e) => setCategoryForm({ ...categoryForm, image: e.target.value })} className="mt-2" />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
+                {loading ? 'Saving...' : (editingCategory ? 'Update Category' : 'Create Category')}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setShowCategoryDialog(false)} className="rounded-full px-8">
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
