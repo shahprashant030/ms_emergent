@@ -657,6 +657,19 @@ async def get_admin_stats(current_user: User = Depends(get_current_user)):
         'total_revenue': total_revenue
     }
 
+@api_router.get("/admin/users", response_model=List[User])
+async def get_all_users(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    users = await db.users.find({}, {'_id': 0}).to_list(1000)
+    
+    for user_doc in users:
+        if isinstance(user_doc.get('created_at'), str):
+            user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+    
+    return users
+
 app.include_router(api_router)
 
 app.add_middleware(
