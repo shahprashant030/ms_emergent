@@ -101,11 +101,10 @@ const AdminDashboard = () => {
   const handleUpdateOrderStatus = async (orderId, status) => {
     try {
       await axios.put(
-        `${API}/admin/orders/${orderId}/status`,
+        `${API}/admin/orders/${orderId}/status?new_status=${status}`,
         null,
         {
           headers: { Authorization: `Bearer ${token}` },
-          params: { status },
         }
       );
       toast.success('Order status updated');
