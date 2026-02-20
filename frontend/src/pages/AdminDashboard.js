@@ -369,13 +369,28 @@ const AdminDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm text-foreground/60">Total Users</div>
-                    <div className="text-3xl font-bold text-primary mt-2">{stats.total_users}</div>
+                    <div className="text-3xl font-bold text-primary mt-2">{customers.length}</div>
                   </div>
                   <Users className="h-12 w-12 text-primary/20" />
                 </div>
               </div>
 
               <div className="bg-white p-6 rounded-xl border border-border/50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm text-foreground/60">Our Team</div>
+                    <div className="text-3xl font-bold text-primary mt-2">{admins.length}</div>
+                  </div>
+                  <Users className="h-12 w-12 text-secondary/20" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Revenue Card - Separate Row */}
+          {stats && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+              <div className="bg-white p-6 rounded-xl border border-border/50 md:col-span-1">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm text-foreground/60">Total Revenue</div>
