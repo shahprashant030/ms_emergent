@@ -677,6 +677,58 @@ async def get_all_users(current_user: User = Depends(get_current_user)):
     
     return users
 
+@api_router.get("/admin/customers", response_model=List[User])
+async def get_customers(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    customers = await db.users.find({'role': 'customer'}, {'_id': 0}).to_list(1000)
+    
+    for user_doc in customers:
+        if isinstance(user_doc.get('created_at'), str):
+            user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+    
+    return customers
+
+@api_router.get("/admin/admins", response_model=List[User])
+async def get_admins(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    admins = await db.users.find({'role': 'admin'}, {'_id': 0}).to_list(1000)
+    
+    for user_doc in admins:
+        if isinstance(user_doc.get('created_at'), str):
+            user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+    
+    return admins
+
+@api_router.post("/upload-image")
+async def upload_image(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Validate file type
+    allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Only image files are allowed (JPEG, PNG, WebP)")
+    
+    # Generate unique filename
+    file_extension = file.filename.split('.')[-1]
+    unique_filename = f"{uuid.uuid4()}.{file_extension}"
+    file_path = UPLOAD_DIR / unique_filename
+    
+    # Save file
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
+    
+    # Return the URL
+    image_url = f"/uploads/{unique_filename}"
+    return {"url": image_url, "filename": unique_filename}
+
 app.include_router(api_router)
 
 app.add_middleware(
