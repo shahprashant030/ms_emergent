@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -24,10 +25,18 @@ const ProductsPage = () => {
     setLoading(true);
     try {
       const params = {};
-      if (categoryParam) params.category = categoryParam;
+      if (categoryParam) {
+        params.category = categoryParam;
+        console.log('Fetching products for category:', categoryParam);
+      }
       const searchParam = searchParams.get('search');
-      if (searchParam) params.search = searchParam;
+      if (searchParam) {
+        params.search = searchParam;
+      }
+      
+      console.log('API Request params:', params);
       const response = await axios.get(`${API}/products`, { params });
+      console.log('API Response:', response.data.length, 'products');
       setProducts(response.data);
     } catch (error) {
       console.error('Failed to fetch products:', error);
@@ -38,18 +47,17 @@ const ProductsPage = () => {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      fetchProducts();
+      navigate('/products');
       return;
     }
+    navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
+  };
 
-    setLoading(true);
-    try {
-      const response = await axios.get(`${API}/products`, { params: { search: searchQuery } });
-      setProducts(response.data);
-    } catch (error) {
-      console.error('Failed to search products:', error);
-    } finally {
-      setLoading(false);
+  const handleCategoryClick = (slug) => {
+    if (slug) {
+      navigate(`/products?category=${slug}`);
+    } else {
+      navigate('/products');
     }
   };
 
@@ -97,13 +105,7 @@ const ProductsPage = () => {
             {categories.map((cat) => (
               <Button
                 key={cat.slug || 'all'}
-                onClick={() => {
-                  if (cat.slug) {
-                    setSearchParams({ category: cat.slug });
-                  } else {
-                    setSearchParams({});
-                  }
-                }}
+                onClick={() => handleCategoryClick(cat.slug)}
                 variant={categoryParam === cat.slug || (!categoryParam && !cat.slug) ? 'default' : 'outline'}
                 className={`rounded-full ${categoryParam === cat.slug || (!categoryParam && !cat.slug) ? 'bg-primary text-white' : 'border-primary text-primary hover:bg-primary/10'}`}
                 data-testid={`category-filter-${cat.slug || 'all'}`}
