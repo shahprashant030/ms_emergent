@@ -125,6 +125,17 @@ const AdminDashboard = () => {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-xl text-foreground/60">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   if (!user || user.role !== 'admin') return null;
 
   if (loading && !stats) {
