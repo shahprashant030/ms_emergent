@@ -13,18 +13,20 @@ const ProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const categoryParam = searchParams.get('category');
 
   useEffect(() => {
     fetchProducts();
-  }, [categoryParam]);
+  }, [categoryParam, searchParams]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const params = {};
       if (categoryParam) params.category = categoryParam;
+      const searchParam = searchParams.get('search');
+      if (searchParam) params.search = searchParam;
       const response = await axios.get(`${API}/products`, { params });
       setProducts(response.data);
     } catch (error) {
