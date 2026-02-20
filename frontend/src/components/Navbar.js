@@ -127,15 +127,15 @@ export const Navbar = () => {
           )}
 
           {/* Categories Bar */}
-          <div className="hidden md:flex items-center justify-center space-x-6 py-3 border-t border-border/30">
-            <Link to="/products" className="text-foreground hover:text-primary transition-colors duration-300 text-sm font-medium uppercase tracking-wide">
+          <div className="hidden md:flex items-center justify-center gap-8 py-4 border-t border-border/30">
+            <Link to="/products" className="text-foreground hover:text-primary transition-colors duration-300 text-sm font-medium uppercase tracking-wider whitespace-nowrap">
               All Products
             </Link>
             {categories.map((cat) => (
               <Link
                 key={cat.slug}
                 to={`/products?category=${cat.slug}`}
-                className="text-foreground hover:text-primary transition-colors duration-300 text-sm font-medium uppercase tracking-wide"
+                className="text-foreground hover:text-primary transition-colors duration-300 text-sm font-medium uppercase tracking-wider whitespace-nowrap"
               >
                 {cat.name}
               </Link>
