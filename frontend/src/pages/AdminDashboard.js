@@ -649,8 +649,45 @@ const AdminDashboard = () => {
               <Textarea value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} required rows={3} className="mt-2" />
             </div>
             <div>
-              <Label>Image URLs (comma-separated) *</Label>
-              <Textarea value={productForm.images} onChange={(e) => setProductForm({ ...productForm, images: e.target.value })} required rows={2} className="mt-2" placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg" />
+              <Label>Product Images</Label>
+              <div className="mt-2 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                    className="flex-1"
+                  />
+                  {uploadingImage && <span className="text-sm text-foreground/60">Uploading...</span>}
+                </div>
+                <div className="text-xs text-foreground/60">
+                  Upload images or enter URLs below (one per line or comma-separated)
+                </div>
+                <Textarea 
+                  value={productForm.images} 
+                  onChange={(e) => setProductForm({ ...productForm, images: e.target.value })} 
+                  required 
+                  rows={2} 
+                  placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
+                />
+                {productForm.images && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {productForm.images.split(',').map((img, idx) => (
+                      img.trim() && (
+                        <img 
+                          key={idx} 
+                          src={img.trim()} 
+                          alt={`Preview ${idx + 1}`} 
+                          className="w-20 h-20 object-cover rounded border border-border"
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                      )
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex gap-4">
               <label className="flex items-center space-x-2">
