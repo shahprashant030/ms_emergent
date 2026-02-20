@@ -389,11 +389,12 @@ const AdminDashboard = () => {
 
           {/* Tabs */}
           <Tabs defaultValue="products" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+            <TabsList className="grid w-full grid-cols-5 mb-8">
               <TabsTrigger value="products">Products ({products.length})</TabsTrigger>
               <TabsTrigger value="categories">Categories ({categories.length})</TabsTrigger>
               <TabsTrigger value="orders">Orders ({orders.length})</TabsTrigger>
               <TabsTrigger value="customers">Customers ({customers.length})</TabsTrigger>
+              <TabsTrigger value="admins">Admins ({admins.length})</TabsTrigger>
             </TabsList>
 
             {/* Products Tab */}
