@@ -24,7 +24,10 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadedImages, setUploadedImages] = useState([]);
   
   // Product Form
   const [showProductDialog, setShowProductDialog] = useState(false);
