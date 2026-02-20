@@ -552,17 +552,17 @@ async def get_all_orders(current_user: User = Depends(get_current_user)):
     return orders
 
 @api_router.put("/admin/orders/{order_id}/status")
-async def update_order_status(order_id: str, status: str, current_user: User = Depends(get_current_user)):
+async def update_order_status(order_id: str, new_status: str, current_user: User = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     
     valid_statuses = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled", "refunded"]
-    if status not in valid_statuses:
+    if new_status not in valid_statuses:
         raise HTTPException(status_code=400, detail="Invalid status")
     
     await db.orders.update_one(
         {'id': order_id},
-        {'$set': {'order_status': status, 'updated_at': datetime.now(timezone.utc).isoformat()}}
+        {'$set': {'order_status': new_status, 'updated_at': datetime.now(timezone.utc).isoformat()}}
     )
     
     return {"message": "Order status updated"}
