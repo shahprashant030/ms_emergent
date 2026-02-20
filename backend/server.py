@@ -157,6 +157,7 @@ class ProductCreate(BaseModel):
     short_description: Optional[str] = None
     categories: List[str] = []
     price: float
+    discount_price: Optional[float] = None
     stock: int = 0
     images: List[str] = []
     is_featured: bool = False
