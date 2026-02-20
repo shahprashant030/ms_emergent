@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
+import HeroCarousel from '@/components/HeroCarousel';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -11,9 +12,12 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [categories] = useState([
-    { name: 'Traditional Sweets', slug: 'sweets', image: 'https://images.pexels.com/photos/36024428/pexels-photo-36024428.jpeg' },
+    { name: 'Traditional Food', slug: 'food', image: 'https://customer-assets.emergentagent.com/job_nepal-heritage-shop/artifacts/knd24dxo_Thekuwa.png' },
     { name: 'Premium Groceries', slug: 'groceries', image: 'https://images.unsplash.com/photo-1642935264368-963f3d53681f?crop=entropy&cs=srgb&fm=jpg&q=85' },
-    { name: 'Handcrafted Clothing', slug: 'clothing', image: 'https://images.unsplash.com/photo-1595972424993-0cf6b1273a68?crop=entropy&cs=srgb&fm=jpg&q=85' },
+    { name: 'Authentic Pickles', slug: 'achar', image: 'https://customer-assets.emergentagent.com/job_nepal-heritage-shop/artifacts/o8gz2tcv_Mango_Pickle.png' },
+    { name: 'Traditional Mithai', slug: 'mithai', image: 'https://images.pexels.com/photos/36024428/pexels-photo-36024428.jpeg' },
+    { name: 'Woolen Clothes', slug: 'clothes', image: 'https://images.unsplash.com/photo-1595972424993-0cf6b1273a68?crop=entropy&cs=srgb&fm=jpg&q=85' },
+    { name: 'Mithila Art', slug: 'art', image: 'https://images.pexels.com/photos/22820070/pexels-photo-22820070.jpeg' },
   ]);
 
   useEffect(() => {
@@ -33,8 +37,8 @@ const HomePage = () => {
     <div className="min-h-screen flex flex-col" data-testid="home-page">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative h-[600px] md:h-[700px] overflow-hidden" data-testid="hero-section">
+      {/* Hero Carousel */}
+      <HeroCarousel />
         <div className="absolute inset-0">
           <img
             src="https://images.pexels.com/photos/34961656/pexels-photo-34961656.jpeg"
