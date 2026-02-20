@@ -341,6 +341,41 @@ async def create_product(product_data: ProductCreate, current_user: User = Depen
     await db.products.insert_one(product_dict)
     return product
 
+@api_router.put("/products/{product_id}", response_model=Product)
+async def update_product(product_id: str, product_data: ProductCreate, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = product_data.model_dump()
+    update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db.products.update_one(
+        {'id': product_id},
+        {'$set': update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    product = await db.products.find_one({'id': product_id}, {'_id': 0})
+    for field in ['created_at', 'updated_at']:
+        if isinstance(product.get(field), str):
+            product[field] = datetime.fromisoformat(product[field])
+    
+    return Product(**product)
+
+@api_router.delete("/products/{product_id}")
+async def delete_product(product_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.products.delete_one({'id': product_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"message": "Product deleted successfully"}
+
 # ============= CATEGORY ROUTES =============
 
 @api_router.get("/categories", response_model=List[Category])
