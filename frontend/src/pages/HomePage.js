@@ -48,7 +48,7 @@ const HomePage = () => {
             <p className="text-lg text-foreground/70">Explore our curated collection of traditional products</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             {categories.map((category) => (
               <Link
                 key={category.slug}
