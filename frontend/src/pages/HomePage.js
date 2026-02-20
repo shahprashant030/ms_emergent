@@ -39,31 +39,6 @@ const HomePage = () => {
 
       {/* Hero Carousel */}
       <HeroCarousel />
-        <div className="absolute inset-0">
-          <img
-            src="https://images.pexels.com/photos/34961656/pexels-photo-34961656.jpeg"
-            alt="Mithila Art Background"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent"></div>
-        </div>
-
-        <div className="relative h-full max-w-7xl mx-auto px-6 md:px-12 flex items-center">
-          <div className="max-w-3xl space-y-8">
-            <h1 className="text-5xl md:text-7xl font-heading font-bold text-primary tracking-tight leading-tight">
-              Heritage in Every Bite
-            </h1>
-            <p className="text-lg md:text-xl text-foreground leading-relaxed max-w-2xl">
-              Discover authentic Nepali sweets, groceries, and handicrafts from the heart of Mithila, crafted with tradition and delivered with care.
-            </p>
-            <Link to="/products">
-              <Button className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 py-6 text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1" data-testid="explore-products-button">
-                Explore Products <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Categories Section */}
       <section className="py-20 md:py-32 bg-muted" data-testid="categories-section">
