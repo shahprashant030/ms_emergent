@@ -400,6 +400,39 @@ async def create_category(category_data: CategoryCreate, current_user: User = De
     await db.categories.insert_one(category_dict)
     return category
 
+@api_router.put("/categories/{category_id}", response_model=Category)
+async def update_category(category_id: str, category_data: CategoryCreate, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = category_data.model_dump()
+    
+    result = await db.categories.update_one(
+        {'id': category_id},
+        {'$set': update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    category = await db.categories.find_one({'id': category_id}, {'_id': 0})
+    if isinstance(category.get('created_at'), str):
+        category['created_at'] = datetime.fromisoformat(category['created_at'])
+    
+    return Category(**category)
+
+@api_router.delete("/categories/{category_id}")
+async def delete_category(category_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.categories.delete_one({'id': category_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    return {"message": "Category deleted successfully"}
+
 # ============= CART ROUTES =============
 
 @api_router.get("/cart", response_model=Cart)
