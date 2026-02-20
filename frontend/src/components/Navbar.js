@@ -86,6 +86,13 @@ export const Navbar = () => {
 
               {user ? (
                 <div className="flex items-center space-x-4">
+                  {user.role === 'admin' && (
+                    <Link to="/admin">
+                      <Button variant="ghost" className="hidden md:inline-flex" data-testid="admin-link">
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
                   <Link to="/orders">
                     <Button variant="ghost" size="icon" data-testid="profile-icon">
                       <User className="h-5 w-5" />
