@@ -54,6 +54,20 @@ const AdminDashboard = () => {
     description: '',
   });
 
+  // Carousel Form
+  const [carousels, setCarousels] = useState([]);
+  const [showCarouselDialog, setShowCarouselDialog] = useState(false);
+  const [editingCarousel, setEditingCarousel] = useState(null);
+  const [carouselImage, setCarouselImage] = useState(null);
+  const [carouselForm, setCarouselForm] = useState({
+    tag: '',
+    title: '',
+    description: '',
+    button_text: 'Shop Now',
+    button_link: '/products',
+    order: 0,
+  });
+
   useEffect(() => {
     if (authLoading) return;
     
