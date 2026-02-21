@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, FolderOpen, ShoppingCart, Users, UserCog, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, FolderOpen, ShoppingCart, Users, UserCog, LogOut, Image } from 'lucide-react';
 
 const LOGO_URL = 'https://customer-assets.emergentagent.com/job_nepal-heritage-shop/artifacts/y8zofolg_Mithila%20Sutra%20Final.png';
 
@@ -18,6 +18,7 @@ export const AdminNavbar = ({ currentTab, onTabChange }) => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'products', label: 'Products', icon: Package },
     { id: 'categories', label: 'Categories', icon: FolderOpen },
+    { id: 'carousel', label: 'Carousel', icon: Image },
     { id: 'orders', label: 'Orders', icon: ShoppingCart },
     { id: 'customers', label: 'Customers', icon: Users },
     { id: 'admins', label: 'Admins', icon: UserCog },
