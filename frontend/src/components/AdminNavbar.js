@@ -24,12 +24,12 @@ export const AdminNavbar = ({ currentTab, onTabChange }) => {
   ];
 
   return (
-    <nav className=\"bg-white border-b border-border sticky top-0 z-50 shadow-sm\">
-      <div className=\"max-w-7xl mx-auto px-6\">
-        <div className=\"flex items-center justify-between h-16\">
-          <div className=\"flex items-center space-x-8\">
-            <img src={LOGO_URL} alt=\"Mithila Sutra\" className=\"h-10 w-auto\" />
-            <span className=\"text-xl font-heading font-semibold text-primary\">Admin Panel</span>
+    <nav className="bg-white border-b border-border sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center space-x-8">
+            <img src={LOGO_URL} alt="Mithila Sutra" className="h-10 w-auto" />
+            <span className="text-xl font-heading font-semibold text-primary">Admin Panel</span>
           </div>
 
           <div className=\"hidden md:flex items-center space-x-1\">
