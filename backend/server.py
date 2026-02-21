@@ -777,7 +777,8 @@ app.add_middleware(
 )
 
 # Mount uploads directory AFTER router for serving static files
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+# Use /api/uploads to ensure proper routing through ingress
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 logging.basicConfig(
     level=logging.INFO,
