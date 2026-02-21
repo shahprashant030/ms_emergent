@@ -661,10 +661,21 @@ const CategoriesTab = ({ categories, getCategoryProductCount, openCategoryDialog
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openCategoryDialog(category)}>
+              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openCategoryDialog(category)} data-testid={`edit-category-${category.id}`}>
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" className="rounded-lg text-destructive hover:bg-destructive/10" onClick={() => handleDeleteCategory(category.id, category.name)}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-lg text-destructive hover:bg-destructive/10" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Delete button clicked for category:', category.id, category.name);
+                  handleDeleteCategory(category.id, category.name);
+                }}
+                data-testid={`delete-category-${category.id}`}
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
