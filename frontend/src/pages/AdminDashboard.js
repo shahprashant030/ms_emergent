@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Plus, Upload, X } from 'lucide-react';
+import { Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Plus, Upload, X, Image } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
