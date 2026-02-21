@@ -54,14 +54,14 @@ const HomePage = () => {
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             {categories.map((category) => (
               <Link
-                key={category.slug}
+                key={category.id}
                 to={`/products?category=${category.slug}`}
                 className="group relative bg-white rounded-xl overflow-hidden border border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/5"
                 data-testid={`category-${category.slug}`}
               >
                 <div className="aspect-[4/3] overflow-hidden">
                   <img
-                    src={category.image}
+                    src={category.image || 'https://via.placeholder.com/400'}
                     alt={category.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
