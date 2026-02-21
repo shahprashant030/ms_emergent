@@ -269,18 +269,30 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteProduct = async (productId, productName) => {
-    if (!window.confirm(`Are you sure you want to delete "${productName}"?`)) return;
+    console.log('Delete clicked - productId:', productId, 'productName:', productName);
+    
+    if (!productId) {
+      console.error('No product ID provided');
+      toast.error('Cannot delete: Product ID missing');
+      return;
+    }
+    
+    if (!window.confirm(`Are you sure you want to delete "${productName}"?`)) {
+      console.log('User cancelled deletion');
+      return;
+    }
 
     setLoading(true);
     try {
-      await axios.delete(`${API}/products/${productId}`, {
+      console.log('Sending DELETE request to:', `${API}/admin/products/${productId}`);
+      await axios.delete(`${API}/admin/products/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Product deleted successfully');
       fetchData();
     } catch (error) {
       console.error('Failed to delete product:', error);
-      toast.error('Failed to delete product');
+      toast.error('Failed to delete product: ' + (error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
     }
