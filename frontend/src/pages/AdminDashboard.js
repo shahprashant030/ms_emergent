@@ -613,10 +613,21 @@ const ProductsTab = ({ products, openProductDialog, handleDeleteProduct }) => (
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openProductDialog(product)}>
+              <Button variant="outline" size="sm" className="rounded-lg" onClick={() => openProductDialog(product)} data-testid={`edit-product-${product.id}`}>
                 <Edit className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" className="rounded-lg text-destructive hover:bg-destructive/10" onClick={() => handleDeleteProduct(product.id, product.name)}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-lg text-destructive hover:bg-destructive/10" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Delete button clicked for product:', product.id, product.name);
+                  handleDeleteProduct(product.id, product.name);
+                }}
+                data-testid={`delete-product-${product.id}`}
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
