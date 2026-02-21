@@ -34,9 +34,6 @@ BASE_URL = os.environ.get('BASE_URL', 'http://localhost:8001')
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
-# Mount uploads directory FIRST for serving static files
-app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-
 # JWT Configuration
 JWT_SECRET = os.environ.get('JWT_SECRET', 'mithila-sutra-secret-key-change-in-production')
 JWT_ALGORITHM = 'HS256'
