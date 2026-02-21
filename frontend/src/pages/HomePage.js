@@ -11,17 +11,11 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [categories] = useState([
-    { name: 'Traditional Food', slug: 'food', image: 'https://customer-assets.emergentagent.com/job_nepal-heritage-shop/artifacts/knd24dxo_Thekuwa.png' },
-    { name: 'Premium Groceries', slug: 'groceries', image: 'https://images.unsplash.com/photo-1642935264368-963f3d53681f?crop=entropy&cs=srgb&fm=jpg&q=85' },
-    { name: 'Authentic Pickles', slug: 'achar', image: 'https://customer-assets.emergentagent.com/job_nepal-heritage-shop/artifacts/o8gz2tcv_Mango_Pickle.png' },
-    { name: 'Traditional Mithai', slug: 'mithai', image: 'https://images.pexels.com/photos/36024428/pexels-photo-36024428.jpeg' },
-    { name: 'Woolen Clothes', slug: 'clothes', image: 'https://images.unsplash.com/photo-1595972424993-0cf6b1273a68?crop=entropy&cs=srgb&fm=jpg&q=85' },
-    { name: 'Mithila Art', slug: 'art', image: 'https://images.pexels.com/photos/22820070/pexels-photo-22820070.jpeg' },
-  ]);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     fetchFeaturedProducts();
+    fetchCategories();
   }, []);
 
   const fetchFeaturedProducts = async () => {
@@ -30,6 +24,15 @@ const HomePage = () => {
       setFeaturedProducts(response.data.slice(0, 6));
     } catch (error) {
       console.error('Failed to fetch products:', error);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get(`${API}/categories`);
+      setCategories(response.data);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
     }
   };
 
