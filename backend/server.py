@@ -28,6 +28,9 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
+# Base URL for image serving
+BASE_URL = os.environ.get('BASE_URL', 'http://localhost:8001')
+
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
