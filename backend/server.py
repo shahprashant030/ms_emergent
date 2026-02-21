@@ -374,6 +374,18 @@ async def update_product(product_id: str, product_data: ProductCreate, current_u
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     
+    # Validate categories exist
+    if product_data.categories:
+        valid_categories = await db.categories.find({'slug': {'$in': product_data.categories}, 'is_active': True}, {'_id': 0, 'slug': 1}).to_list(100)
+        valid_slugs = {cat['slug'] for cat in valid_categories}
+        invalid_categories = [cat for cat in product_data.categories if cat not in valid_slugs]
+        
+        if invalid_categories:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Invalid categories: {', '.join(invalid_categories)}. Please create these categories first."
+            )
+    
     update_data = product_data.model_dump()
     update_data['updated_at'] = datetime.now(timezone.utc).isoformat()
     
