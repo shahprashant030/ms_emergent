@@ -407,6 +407,135 @@ const AdminDashboard = () => {
     return products.filter(p => p.categories.includes(categorySlug)).length;
   };
 
+  // Carousel Functions
+  const handleCarouselImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post(`${API}/upload-image`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setCarouselImage(response.data.url);
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const openCarouselDialog = (carousel = null) => {
+    if (carousel) {
+      setEditingCarousel(carousel);
+      setCarouselForm({
+        tag: carousel.tag || '',
+        title: carousel.title || '',
+        description: carousel.description || '',
+        button_text: carousel.button_text || 'Shop Now',
+        button_link: carousel.button_link || '/products',
+        order: carousel.order || 0,
+      });
+      setCarouselImage(carousel.image || null);
+    } else {
+      setEditingCarousel(null);
+      setCarouselForm({
+        tag: '',
+        title: '',
+        description: '',
+        button_text: 'Shop Now',
+        button_link: '/products',
+        order: carousels.length,
+      });
+      setCarouselImage(null);
+    }
+    setShowCarouselDialog(true);
+  };
+
+  const handleSaveCarousel = async (e) => {
+    e.preventDefault();
+    
+    if (!carouselImage) {
+      toast.error('Please upload a carousel image');
+      return;
+    }
+
+    if (!carouselForm.tag || !carouselForm.title || !carouselForm.description) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const carouselData = {
+        ...carouselForm,
+        image: carouselImage,
+        order: parseInt(carouselForm.order) || 0,
+      };
+
+      if (editingCarousel) {
+        await axios.put(`${API}/carousels/${editingCarousel.id}`, carouselData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success('Carousel updated successfully');
+      } else {
+        await axios.post(`${API}/carousels`, carouselData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        toast.success('Carousel created successfully');
+      }
+
+      setShowCarouselDialog(false);
+      fetchData();
+    } catch (error) {
+      console.error('Failed to save carousel:', error);
+      toast.error('Failed to save carousel');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteCarousel = async (carouselId, carouselTitle) => {
+    console.log('handleDeleteCarousel called - carouselId:', carouselId, 'carouselTitle:', carouselTitle);
+    
+    if (!carouselId) {
+      console.error('No carousel ID provided');
+      toast.error('Cannot delete: Carousel ID missing');
+      return;
+    }
+    
+    if (!window.confirm(`Are you sure you want to delete "${carouselTitle}"?`)) {
+      console.log('User cancelled carousel deletion');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log('Sending DELETE request to:', `${API}/carousels/${carouselId}`);
+      await axios.delete(`${API}/carousels/${carouselId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Carousel deleted successfully');
+      fetchData();
+    } catch (error) {
+      console.error('Failed to delete carousel:', error);
+      toast.error('Failed to delete carousel: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdateOrderStatus = async (orderId, status) => {
     try {
       await axios.put(
