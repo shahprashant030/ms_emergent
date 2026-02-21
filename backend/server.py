@@ -776,6 +776,9 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
+# Mount uploads directory AFTER router for serving static files
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
