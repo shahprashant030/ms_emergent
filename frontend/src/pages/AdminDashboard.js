@@ -874,6 +874,75 @@ const CategoriesTab = ({ categories, getCategoryProductCount, openCategoryDialog
   </div>
 );
 
+const CarouselTab = ({ carousels, openCarouselDialog, handleDeleteCarousel }) => (
+  <div className="space-y-6">
+    <div className="flex justify-between items-center">
+      <h1 className="text-3xl font-heading font-semibold text-primary">Carousel Management</h1>
+      <Button onClick={() => openCarouselDialog()} className="bg-primary hover:bg-primary/90 text-white rounded-full px-6">
+        <Plus className="h-4 w-4 mr-2" /> Add Slide
+      </Button>
+    </div>
+
+    <div className="grid grid-cols-1 gap-4">
+      {carousels.length === 0 ? (
+        <div className="bg-white rounded-xl border border-border/50 shadow-sm p-12 text-center text-foreground/60">
+          No carousel slides yet. Add your first slide to display on the homepage.
+        </div>
+      ) : (
+        carousels.map((carousel) => (
+          <div key={carousel.id} className="bg-white p-6 rounded-xl border border-border/50 shadow-sm hover:border-primary/30 transition-colors">
+            <div className="flex items-start gap-6">
+              <img 
+                src={carousel.image} 
+                alt={carousel.title} 
+                className="w-32 h-32 object-cover rounded-lg"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs uppercase tracking-wider text-secondary font-medium bg-secondary/10 px-2 py-1 rounded">
+                    {carousel.tag}
+                  </span>
+                  <span className="text-xs text-foreground/50">Order: {carousel.order}</span>
+                </div>
+                <div className="font-semibold text-lg text-primary">{carousel.title}</div>
+                <div className="text-sm text-foreground/60 mt-1 line-clamp-2">{carousel.description}</div>
+                <div className="text-xs text-foreground/50 mt-2">
+                  Button: "{carousel.button_text}" → {carousel.button_link}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-lg" 
+                  onClick={() => openCarouselDialog(carousel)}
+                  data-testid={`edit-carousel-${carousel.id}`}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-lg text-destructive hover:bg-destructive/10" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Delete button clicked for carousel:', carousel.id, carousel.title);
+                    handleDeleteCarousel(carousel.id, carousel.title);
+                  }}
+                  data-testid={`delete-carousel-${carousel.id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+);
+
 const OrdersTab = ({ orders, handleUpdateOrderStatus }) => (
   <div className="space-y-6">
     <h1 className="text-3xl font-heading font-semibold text-primary">Orders Management</h1>
