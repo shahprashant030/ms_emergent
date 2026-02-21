@@ -117,8 +117,8 @@ const AdminDashboard = () => {
           },
         });
 
-        const fullUrl = `${process.env.REACT_APP_BACKEND_URL}${response.data.url}`;
-        uploadedUrls.push(fullUrl);
+        // Backend now returns full URL
+        uploadedUrls.push(response.data.url);
       }
 
       setProductImages([...productImages, ...uploadedUrls]);
