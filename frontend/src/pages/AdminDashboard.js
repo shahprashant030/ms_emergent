@@ -764,6 +764,9 @@ const ProductForm = ({ productForm, setProductForm, productImages, uploadingImag
       <div>
         <Label>Categories (comma-separated)</Label>
         <Input value={productForm.categories} onChange={(e) => setProductForm({ ...productForm, categories: e.target.value })} placeholder="food, groceries" className="mt-2" />
+        <div className="text-xs text-foreground/60 mt-1">
+          Available categories: You must create categories first from the Categories tab before adding them here.
+        </div>
       </div>
     </div>
     <div>
