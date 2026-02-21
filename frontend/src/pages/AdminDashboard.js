@@ -678,6 +678,15 @@ const AdminDashboard = () => {
           />
         )}
 
+        {/* Carousel Tab */}
+        {currentTab === 'carousel' && (
+          <CarouselTab 
+            carousels={carousels}
+            openCarouselDialog={openCarouselDialog}
+            handleDeleteCarousel={handleDeleteCarousel}
+          />
+        )}
+
         {/* Orders Tab */}
         {currentTab === 'orders' && (
           <OrdersTab 
