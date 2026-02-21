@@ -105,6 +105,19 @@ class Category(BaseModel):
     is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class Carousel(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    image: str
+    tag: str  # e.g., "FESTIVAL SPECIAL"
+    title: str  # e.g., "Flat 50% OFF"
+    description: str
+    button_text: str = "Shop Now"  # e.g., "Shop Now", "Grab the Offer"
+    button_link: str = "/products"
+    order: int = 0  # For ordering slides
+    is_active: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class CartItem(BaseModel):
     product_id: str
     variant_name: Optional[str] = None
