@@ -32,7 +32,7 @@ export const AdminNavbar = ({ currentTab, onTabChange }) => {
             <span className="text-xl font-heading font-semibold text-primary">Admin Panel</span>
           </div>
 
-          <div className=\"hidden md:flex items-center space-x-1\">
+          <div className="hidden md:flex items-center space-x-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -45,31 +45,31 @@ export const AdminNavbar = ({ currentTab, onTabChange }) => {
                       : 'text-foreground hover:bg-muted'
                   }`}
                 >
-                  <Icon className=\"h-4 w-4\" />
-                  <span className=\"text-sm font-medium\">{tab.label}</span>
+                  <Icon className="h-4 w-4" />
+                  <span className="text-sm font-medium">{tab.label}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className=\"flex items-center space-x-4\">
-            <div className=\"hidden md:block text-sm text-foreground/70\">
+          <div className="flex items-center space-x-4">
+            <div className="hidden md:block text-sm text-foreground/70">
               {user?.name || user?.phone}
             </div>
             <Button
-              variant=\"ghost\"
-              size=\"sm\"
+              variant="ghost"
+              size="sm"
               onClick={handleLogout}
-              className=\"flex items-center space-x-2\"
+              className="flex items-center space-x-2"
             >
-              <LogOut className=\"h-4 w-4\" />
+              <LogOut className="h-4 w-4" />
               <span>Logout</span>
             </Button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        <div className=\"md:hidden pb-4 pt-2 flex flex-wrap gap-2\">
+        <div className="md:hidden pb-4 pt-2 flex flex-wrap gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -82,7 +82,7 @@ export const AdminNavbar = ({ currentTab, onTabChange }) => {
                     : 'bg-muted text-foreground'
                 }`}
               >
-                <Icon className=\"h-3 w-3\" />
+                <Icon className="h-3 w-3" />
                 <span>{tab.label}</span>
               </button>
             );
