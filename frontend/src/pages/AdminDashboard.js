@@ -752,6 +752,28 @@ const AdminDashboard = () => {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Carousel Dialog */}
+      <Dialog open={showCarouselDialog} onOpenChange={setShowCarouselDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-heading text-primary">
+              {editingCarousel ? 'Edit Carousel Slide' : 'Create New Carousel Slide'}
+            </DialogTitle>
+          </DialogHeader>
+          <CarouselForm 
+            carouselForm={carouselForm}
+            setCarouselForm={setCarouselForm}
+            carouselImage={carouselImage}
+            uploadingImage={uploadingImage}
+            handleCarouselImageUpload={handleCarouselImageUpload}
+            handleSaveCarousel={handleSaveCarousel}
+            loading={loading}
+            editingCarousel={editingCarousel}
+            onCancel={() => setShowCarouselDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
