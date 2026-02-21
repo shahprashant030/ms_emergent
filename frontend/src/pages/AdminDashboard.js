@@ -1157,4 +1157,89 @@ const CategoryForm = ({ categoryForm, setCategoryForm, categoryImage, uploadingI
   </form>
 );
 
+const CarouselForm = ({ carouselForm, setCarouselForm, carouselImage, uploadingImage, handleCarouselImageUpload, handleSaveCarousel, loading, editingCarousel, onCancel }) => (
+  <form onSubmit={handleSaveCarousel} className="space-y-4">
+    <div>
+      <Label>Carousel Image *</Label>
+      <div className="mt-2 space-y-3">
+        <div className="flex items-center gap-3">
+          <Input type="file" accept="image/*" onChange={handleCarouselImageUpload} disabled={uploadingImage} className="flex-1" />
+          {uploadingImage && <span className="text-sm text-foreground/60">Uploading...</span>}
+        </div>
+        {carouselImage && (
+          <img src={carouselImage} alt="Carousel preview" className="w-full h-48 object-contain rounded border border-border bg-muted" />
+        )}
+      </div>
+    </div>
+    <div>
+      <Label>Tag * <span className="text-xs text-foreground/50">(e.g., FESTIVAL SPECIAL, NEW ARRIVAL)</span></Label>
+      <Input 
+        value={carouselForm.tag} 
+        onChange={(e) => setCarouselForm({ ...carouselForm, tag: e.target.value })} 
+        placeholder="FESTIVAL SPECIAL"
+        required 
+        className="mt-2" 
+      />
+    </div>
+    <div>
+      <Label>Title * <span className="text-xs text-foreground/50">(Main heading)</span></Label>
+      <Input 
+        value={carouselForm.title} 
+        onChange={(e) => setCarouselForm({ ...carouselForm, title: e.target.value })} 
+        placeholder="Flat 50% OFF"
+        required 
+        className="mt-2" 
+      />
+    </div>
+    <div>
+      <Label>Description *</Label>
+      <Textarea 
+        value={carouselForm.description} 
+        onChange={(e) => setCarouselForm({ ...carouselForm, description: e.target.value })} 
+        placeholder="Get flat 50% off on the occasion of Chhath festival on all Thekuwa purchases."
+        required 
+        rows={3} 
+        className="mt-2" 
+      />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <Label>Button Text * <span className="text-xs text-foreground/50">(Button label)</span></Label>
+        <Input 
+          value={carouselForm.button_text} 
+          onChange={(e) => setCarouselForm({ ...carouselForm, button_text: e.target.value })} 
+          placeholder="Shop Now"
+          required 
+          className="mt-2" 
+        />
+      </div>
+      <div>
+        <Label>Button Link</Label>
+        <Input 
+          value={carouselForm.button_link} 
+          onChange={(e) => setCarouselForm({ ...carouselForm, button_link: e.target.value })} 
+          placeholder="/products"
+          className="mt-2" 
+        />
+      </div>
+    </div>
+    <div>
+      <Label>Order <span className="text-xs text-foreground/50">(Lower numbers appear first)</span></Label>
+      <Input 
+        type="number" 
+        value={carouselForm.order} 
+        onChange={(e) => setCarouselForm({ ...carouselForm, order: e.target.value })} 
+        min="0"
+        className="mt-2 w-24" 
+      />
+    </div>
+    <div className="flex gap-3 pt-4">
+      <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/90 text-white rounded-full px-8">
+        {loading ? 'Saving...' : (editingCarousel ? 'Update Slide' : 'Create Slide')}
+      </Button>
+      <Button type="button" variant="outline" onClick={onCancel} className="rounded-full px-8">Cancel</Button>
+    </div>
+  </form>
+);
+
 export default AdminDashboard;
