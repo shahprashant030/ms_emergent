@@ -489,6 +489,79 @@ async def delete_category(category_id: str, current_user: User = Depends(get_cur
     
     return {"message": "Category deleted successfully"}
 
+# ============= CAROUSEL ROUTES =============
+
+@api_router.get("/carousels", response_model=List[Carousel])
+async def get_carousels():
+    carousels = await db.carousels.find({'is_active': True}, {'_id': 0}).sort('order', 1).to_list(100)
+    
+    for carousel in carousels:
+        if isinstance(carousel.get('created_at'), str):
+            carousel['created_at'] = datetime.fromisoformat(carousel['created_at'])
+    
+    return [Carousel(**c) for c in carousels]
+
+@api_router.get("/admin/carousels", response_model=List[Carousel])
+async def get_all_carousels(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    carousels = await db.carousels.find({}, {'_id': 0}).sort('order', 1).to_list(100)
+    
+    for carousel in carousels:
+        if isinstance(carousel.get('created_at'), str):
+            carousel['created_at'] = datetime.fromisoformat(carousel['created_at'])
+    
+    return [Carousel(**c) for c in carousels]
+
+@api_router.post("/carousels", response_model=Carousel)
+async def create_carousel(carousel: Carousel, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    carousel_dict = carousel.model_dump()
+    carousel_dict['created_at'] = carousel_dict['created_at'].isoformat()
+    
+    await db.carousels.insert_one(carousel_dict)
+    
+    carousel_dict['created_at'] = datetime.fromisoformat(carousel_dict['created_at'])
+    return Carousel(**carousel_dict)
+
+@api_router.put("/carousels/{carousel_id}", response_model=Carousel)
+async def update_carousel(carousel_id: str, carousel_data: dict, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    existing = await db.carousels.find_one({'id': carousel_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Carousel not found")
+    
+    update_data = {k: v for k, v in carousel_data.items() if v is not None}
+    
+    await db.carousels.update_one(
+        {'id': carousel_id},
+        {'$set': update_data}
+    )
+    
+    carousel = await db.carousels.find_one({'id': carousel_id}, {'_id': 0})
+    
+    if isinstance(carousel.get('created_at'), str):
+        carousel['created_at'] = datetime.fromisoformat(carousel['created_at'])
+    
+    return Carousel(**carousel)
+
+@api_router.delete("/carousels/{carousel_id}")
+async def delete_carousel(carousel_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.carousels.delete_one({'id': carousel_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Carousel not found")
+    
+    return {"message": "Carousel deleted successfully"}
+
 # ============= CART ROUTES =============
 
 @api_router.get("/cart", response_model=Cart)
