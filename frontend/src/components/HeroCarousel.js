@@ -17,7 +17,7 @@ const HeroCarousel = () => {
         if (response.data && response.data.length > 0) {
           setSlides(response.data);
         } else {
-          // Default slides if no carousels in database
+          // Default slide if no carousels in database
           setSlides([
             {
               id: 'default-1',
@@ -32,7 +32,7 @@ const HeroCarousel = () => {
         }
       } catch (error) {
         console.error('Failed to fetch carousels:', error);
-        // Default slides on error
+        // Default slide on error
         setSlides([
           {
             id: 'default-1',
@@ -87,7 +87,7 @@ const HeroCarousel = () => {
   }
 
   return (
-    <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden bg-muted" data-testid="hero-carousel">
+    <div className="relative w-full h-[500px] md:h-[600px] overflow-hidden" data-testid="hero-carousel">
       {/* Slides */}
       <div className="relative h-full">
         {slides.map((slide, index) => (
@@ -97,36 +97,36 @@ const HeroCarousel = () => {
               index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <div className="flex flex-col md:flex-row items-center justify-between h-full max-w-7xl mx-auto px-6 md:px-12">
-              {/* Text Content */}
-              <div className="flex-1 space-y-6 text-center md:text-left z-10">
-                <div className="space-y-4">
-                  <p className="text-sm md:text-base uppercase tracking-widest text-secondary font-medium">
+            {/* Full-width Background Image */}
+            <div 
+              className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+              style={{ backgroundImage: `url(${slide.image})` }}
+            >
+              {/* Dark overlay for better text readability */}
+              <div className="absolute inset-0 bg-black/30" />
+            </div>
+
+            {/* Text Content Overlay */}
+            <div className="relative h-full flex items-center">
+              <div className="max-w-7xl mx-auto px-6 md:px-12 w-full">
+                <div className="max-w-xl space-y-6">
+                  <p className="text-sm md:text-base uppercase tracking-widest text-white/90 font-medium drop-shadow-lg">
                     {slide.tag}
                   </p>
-                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-primary tracking-tight leading-tight">
+                  <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-white tracking-tight leading-tight drop-shadow-xl">
                     {slide.title}
                   </h1>
-                  <p className="text-lg md:text-xl text-foreground/80 max-w-xl">
+                  <p className="text-lg md:text-xl text-white/90 max-w-lg drop-shadow-lg">
                     {slide.description}
                   </p>
+                  <Button
+                    onClick={() => window.location.href = slide.button_link || '/products'}
+                    className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 py-6 text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
+                    data-testid="shop-now-button"
+                  >
+                    {slide.button_text || 'Shop Now'}
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => window.location.href = slide.button_link || '/products'}
-                  className="bg-primary hover:bg-primary/90 text-white rounded-full px-8 py-6 text-lg font-medium transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
-                  data-testid="shop-now-button"
-                >
-                  {slide.button_text || 'Shop Now'}
-                </Button>
-              </div>
-
-              {/* Image */}
-              <div className="flex-1 flex items-center justify-center mt-8 md:mt-0">
-                <img
-                  src={slide.image}
-                  alt={slide.title}
-                  className="max-w-[300px] md:max-w-[400px] lg:max-w-[500px] h-auto object-contain drop-shadow-2xl"
-                />
               </div>
             </div>
           </div>
@@ -138,19 +138,19 @@ const HeroCarousel = () => {
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-20"
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-20"
             aria-label="Previous slide"
             data-testid="prev-slide"
           >
-            <ChevronLeft className="h-6 w-6 text-primary" />
+            <ChevronLeft className="h-6 w-6 text-white" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-20"
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110 z-20"
             aria-label="Next slide"
             data-testid="next-slide"
           >
-            <ChevronRight className="h-6 w-6 text-primary" />
+            <ChevronRight className="h-6 w-6 text-white" />
           </button>
         </>
       )}
@@ -164,7 +164,7 @@ const HeroCarousel = () => {
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 index === currentSlide
-                  ? 'bg-primary w-8'
+                  ? 'bg-white w-8'
                   : 'bg-white/50 hover:bg-white/80'
               }`}
               aria-label={`Go to slide ${index + 1}`}
