@@ -284,8 +284,8 @@ const AdminDashboard = () => {
 
     setLoading(true);
     try {
-      console.log('Sending DELETE request to:', `${API}/admin/products/${productId}`);
-      await axios.delete(`${API}/admin/products/${productId}`, {
+      console.log('Sending DELETE request to:', `${API}/products/${productId}`);
+      await axios.delete(`${API}/products/${productId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success('Product deleted successfully');
