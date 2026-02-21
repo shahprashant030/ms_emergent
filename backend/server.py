@@ -761,8 +761,8 @@ async def upload_image(file: UploadFile = File(...), current_user: User = Depend
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
     
-    # Return the URL
-    image_url = f"/uploads/{unique_filename}"
+    # Return the full URL
+    image_url = f"{BASE_URL}/uploads/{unique_filename}"
     return {"url": image_url, "filename": unique_filename}
 
 app.include_router(api_router)
