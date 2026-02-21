@@ -28,37 +28,28 @@ export const Navbar = () => {
     }
   };
 
-  const categories = [
-    { name: 'Food', slug: 'food' },
-    { name: 'Groceries', slug: 'groceries' },
-    { name: 'Pickles', slug: 'achar' },
-    { name: 'Mithai', slug: 'mithai' },
-    { name: 'Clothes', slug: 'clothes' },
-    { name: 'Art', slug: 'art' },
-  ];
-
   return (
     <>
       <nav className="backdrop-blur-md bg-background/80 border-b border-border/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="flex items-center justify-between h-20">
+          <div className="flex items-center justify-between h-24">
             <Link to="/" className="flex items-center space-x-3">
-              <img src={LOGO_URL} alt="Mithila Sutra Logo" className="h-12 w-auto" />
+              <img src={LOGO_URL} alt="Mithila Sutra Logo" className="h-14 w-auto" />
             </Link>
 
-            {/* Desktop Search */}
-            <div className="hidden md:flex flex-1 max-w-md mx-8">
-              <form onSubmit={handleSearch} className="w-full flex gap-2">
+            {/* Desktop Search - Made bigger */}
+            <div className="hidden md:flex flex-1 max-w-2xl mx-12">
+              <form onSubmit={handleSearch} className="w-full flex gap-3">
                 <Input
                   type="text"
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="rounded-lg"
+                  className="rounded-xl h-14 text-lg px-6 border-2 border-border/60 focus:border-primary"
                   data-testid="search-input-desktop"
                 />
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-lg" data-testid="search-button-desktop">
-                  <Search className="h-5 w-5" />
+                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-xl h-14 w-14 p-0" data-testid="search-button-desktop">
+                  <Search className="h-6 w-6" />
                 </Button>
               </form>
             </div>
@@ -114,7 +105,7 @@ export const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Search */}
+          {/* Mobile Search - Made bigger */}
           {showSearch && (
             <div className="md:hidden pb-4">
               <form onSubmit={handleSearch} className="flex gap-2">
@@ -123,50 +114,24 @@ export const Navbar = () => {
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="rounded-lg"
+                  className="rounded-xl h-12 text-base px-4"
                   data-testid="search-input-mobile"
                 />
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-lg" data-testid="search-button-mobile">
+                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-xl h-12 w-12 p-0" data-testid="search-button-mobile">
                   <Search className="h-5 w-5" />
                 </Button>
               </form>
             </div>
           )}
 
-          {/* Categories Bar */}
-          <div className="hidden md:flex items-center justify-center gap-8 py-4 border-t border-border/30">
-            <Link to="/products" className="text-foreground hover:text-primary transition-colors duration-300 text-sm font-medium uppercase tracking-wider whitespace-nowrap">
-              All Products
-            </Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                to={`/products?category=${cat.slug}`}
-                className="text-foreground hover:text-primary transition-colors duration-300 text-sm font-medium uppercase tracking-wider whitespace-nowrap"
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </div>
-
-          {/* Mobile Menu */}
+          {/* Mobile Menu - Simplified without categories */}
           {mobileMenu && (
             <div className="md:hidden py-4 space-y-3 border-t border-border/50">
-              <Link to="/products" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenu(false)}>
+              <Link to="/products" className="block py-2 text-foreground hover:text-primary transition-colors font-medium" onClick={() => setMobileMenu(false)}>
                 All Products
               </Link>
-              {categories.map((cat) => (
-                <Link
-                  key={cat.slug}
-                  to={`/products?category=${cat.slug}`}
-                  className="block py-2 text-foreground hover:text-primary transition-colors"
-                  onClick={() => setMobileMenu(false)}
-                >
-                  {cat.name}
-                </Link>
-              ))}
               {user && user.role === 'admin' && (
-                <Link to="/admin" className="block py-2 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenu(false)}>
+                <Link to="/admin" className="block py-2 text-foreground hover:text-primary transition-colors font-medium" onClick={() => setMobileMenu(false)}>
                   Admin Dashboard
                 </Link>
               )}
