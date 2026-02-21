@@ -316,10 +316,19 @@ async def get_products(category: Optional[str] = None, featured: Optional[bool] 
     
     products = await db.products.find(query, {'_id': 0}).to_list(1000)
     
+    # Get all valid category slugs
+    valid_categories = await db.categories.find({'is_active': True}, {'_id': 0, 'slug': 1}).to_list(1000)
+    valid_category_slugs = {cat['slug'] for cat in valid_categories}
+    
+    # Filter products to only include valid categories
     for product in products:
         for field in ['created_at', 'updated_at']:
             if isinstance(product.get(field), str):
                 product[field] = datetime.fromisoformat(product[field])
+        
+        # Filter out invalid categories
+        if product.get('categories'):
+            product['categories'] = [cat for cat in product['categories'] if cat in valid_category_slugs]
     
     return products
 
