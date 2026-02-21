@@ -149,8 +149,8 @@ const AdminDashboard = () => {
         },
       });
 
-      const fullUrl = `${process.env.REACT_APP_BACKEND_URL}${response.data.url}`;
-      setCategoryImage(fullUrl);
+      // Backend now returns full URL
+      setCategoryImage(response.data.url);
       toast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Failed to upload image:', error);
