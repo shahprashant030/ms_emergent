@@ -358,10 +358,22 @@ const AdminDashboard = () => {
   };
 
   const handleDeleteCategory = async (categoryId, categoryName) => {
-    if (!window.confirm(`Are you sure you want to delete "${categoryName}"?`)) return;
+    console.log('handleDeleteCategory called - categoryId:', categoryId, 'categoryName:', categoryName);
+    
+    if (!categoryId) {
+      console.error('No category ID provided');
+      toast.error('Cannot delete: Category ID missing');
+      return;
+    }
+    
+    if (!window.confirm(`Are you sure you want to delete "${categoryName}"?`)) {
+      console.log('User cancelled category deletion');
+      return;
+    }
 
     setLoading(true);
     try {
+      console.log('Sending DELETE request to:', `${API}/categories/${categoryId}`);
       await axios.delete(`${API}/categories/${categoryId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -369,7 +381,7 @@ const AdminDashboard = () => {
       fetchData();
     } catch (error) {
       console.error('Failed to delete category:', error);
-      toast.error('Failed to delete category');
+      toast.error('Failed to delete category: ' + (error.response?.data?.detail || error.message));
     } finally {
       setLoading(false);
     }
