@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-import { Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Plus, X, Image } from 'lucide-react';
+import { Package, ShoppingCart, Users, DollarSign, Edit, Trash2, Plus, X, Image, Ticket } from 'lucide-react';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -33,6 +33,7 @@ const AdminDashboard = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [carousels, setCarousels] = useState([]);
+  const [coupons, setCoupons] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,7 +42,7 @@ const AdminDashboard = () => {
   // Delete confirmation dialog state
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
-    type: '', // 'product', 'category', 'carousel'
+    type: '', // 'product', 'category', 'carousel', 'coupon'
     id: '',
     name: '',
   });
