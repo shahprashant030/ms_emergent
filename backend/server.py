@@ -1026,6 +1026,12 @@ async def update_order_status(order_id: str, new_status: str, current_user: User
         {'$set': {'order_status': new_status, 'updated_at': datetime.now(timezone.utc).isoformat()}}
     )
     
+    # Get order and send SMS notification
+    order_doc = await db.orders.find_one({'id': order_id}, {'_id': 0})
+    if order_doc:
+        import asyncio
+        asyncio.create_task(send_order_notification(order_doc, new_status))
+    
     return {"message": "Order status updated"}
 
 @api_router.get("/admin/stats")
