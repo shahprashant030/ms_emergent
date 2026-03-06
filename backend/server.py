@@ -926,15 +926,30 @@ async def clear_cart(session_id: Optional[str] = None,
 
 @api_router.post("/orders", response_model=Order)
 async def create_order(order_data: OrderCreate, current_user: User = Depends(get_current_user)):
+    # Apply coupon if provided
+    discount = order_data.discount_amount
+    final_total = order_data.total - discount
+    
+    # If coupon code provided, increment usage
+    if order_data.coupon_code:
+        await db.coupons.update_one(
+            {'code': order_data.coupon_code.upper()},
+            {'$inc': {'used_count': 1}}
+        )
+    
     order = Order(
         user_id=current_user.id,
         items=order_data.items,
         subtotal=order_data.total,
-        total=order_data.total,
+        discount=discount,
+        total=final_total,
         shipping_address=order_data.shipping_address,
         phone=order_data.phone,
         name=order_data.name,
-        notes=order_data.notes
+        email=order_data.email,
+        notes=order_data.notes,
+        payment_method=order_data.payment_method,
+        coupon_code=order_data.coupon_code
     )
     
     order_dict = order.model_dump()
@@ -943,10 +958,15 @@ async def create_order(order_data: OrderCreate, current_user: User = Depends(get
     
     await db.orders.insert_one(order_dict)
     
+    # Clear user's cart
     await db.carts.update_one(
         {'user_id': current_user.id},
         {'$set': {'items': [], 'updated_at': datetime.now(timezone.utc).isoformat()}}
     )
+    
+    # Send SMS notification (non-blocking)
+    import asyncio
+    asyncio.create_task(send_order_notification(order_dict, "placed"))
     
     return order
 
