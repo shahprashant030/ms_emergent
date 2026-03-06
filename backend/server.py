@@ -310,9 +310,66 @@ async def verify_otp(request: OTPVerifyRequest):
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
+# Google OAuth session endpoint
+@api_router.post("/auth/google/session")
+async def google_auth_session(session_id: str):
+    """Exchange Google OAuth session_id for user data and JWT token"""
+    import httpx
+    
+    try:
+        # Call Emergent Auth API to get session data
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id}
+            )
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=401, detail="Invalid session")
+            
+            google_data = response.json()
+            
+            # Check if user exists by email
+            user_doc = await db.users.find_one({'email': google_data['email']}, {'_id': 0})
+            
+            if user_doc:
+                # Update existing user with Google data
+                await db.users.update_one(
+                    {'email': google_data['email']},
+                    {'$set': {
+                        'name': google_data.get('name') or user_doc.get('name'),
+                        'picture': google_data.get('picture'),
+                        'auth_provider': 'google'
+                    }}
+                )
+                user_doc = await db.users.find_one({'email': google_data['email']}, {'_id': 0})
+                if isinstance(user_doc.get('created_at'), str):
+                    user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+                user = User(**user_doc)
+            else:
+                # Create new user from Google data
+                user = User(
+                    email=google_data['email'],
+                    name=google_data.get('name'),
+                    picture=google_data.get('picture'),
+                    auth_provider='google',
+                    role='customer'
+                )
+                user_dict = user.model_dump()
+                user_dict['created_at'] = user_dict['created_at'].isoformat()
+                await db.users.insert_one(user_dict)
+            
+            token = create_token(user.id)
+            
+            return {"token": token, "user": user}
+            
+    except httpx.HTTPError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to verify Google session: {str(e)}")
+
 @api_router.put("/auth/profile", response_model=User)
 async def update_profile(name: Optional[str] = None, email: Optional[str] = None, 
-                        address: Optional[str] = None, current_user: User = Depends(get_current_user)):
+                        address: Optional[str] = None, city: Optional[str] = None,
+                        phone: Optional[str] = None, current_user: User = Depends(get_current_user)):
     update_data = {}
     if name:
         update_data['name'] = name
@@ -320,6 +377,10 @@ async def update_profile(name: Optional[str] = None, email: Optional[str] = None
         update_data['email'] = email
     if address:
         update_data['address'] = address
+    if city:
+        update_data['city'] = city
+    if phone:
+        update_data['phone'] = phone
     
     if update_data:
         await db.users.update_one({'id': current_user.id}, {'$set': update_data})
@@ -329,6 +390,112 @@ async def update_profile(name: Optional[str] = None, email: Optional[str] = None
         return User(**user_doc)
     
     return current_user
+
+# ============= COUPON ROUTES =============
+
+@api_router.get("/coupons/validate")
+async def validate_coupon(code: str, order_total: float):
+    """Validate a coupon and calculate discount"""
+    coupon_doc = await db.coupons.find_one({'code': code.upper(), 'is_active': True}, {'_id': 0})
+    
+    if not coupon_doc:
+        raise HTTPException(status_code=404, detail="Coupon not found or expired")
+    
+    # Check validity dates
+    now = datetime.now(timezone.utc)
+    valid_from = datetime.fromisoformat(coupon_doc['valid_from']) if isinstance(coupon_doc['valid_from'], str) else coupon_doc['valid_from']
+    valid_until = datetime.fromisoformat(coupon_doc['valid_until']) if isinstance(coupon_doc['valid_until'], str) else coupon_doc['valid_until']
+    
+    if valid_from.tzinfo is None:
+        valid_from = valid_from.replace(tzinfo=timezone.utc)
+    if valid_until.tzinfo is None:
+        valid_until = valid_until.replace(tzinfo=timezone.utc)
+    
+    if now < valid_from or now > valid_until:
+        raise HTTPException(status_code=400, detail="Coupon is not valid at this time")
+    
+    # Check usage limit
+    if coupon_doc.get('usage_limit') and coupon_doc['used_count'] >= coupon_doc['usage_limit']:
+        raise HTTPException(status_code=400, detail="Coupon usage limit reached")
+    
+    # Check minimum order amount
+    if order_total < coupon_doc.get('min_order_amount', 0):
+        raise HTTPException(status_code=400, detail=f"Minimum order amount is NPR {coupon_doc['min_order_amount']}")
+    
+    # Calculate discount
+    if coupon_doc['discount_type'] == 'percentage':
+        discount = order_total * (coupon_doc['discount_value'] / 100)
+        if coupon_doc.get('max_discount'):
+            discount = min(discount, coupon_doc['max_discount'])
+    else:
+        discount = coupon_doc['discount_value']
+    
+    return {
+        "valid": True,
+        "code": coupon_doc['code'],
+        "discount_type": coupon_doc['discount_type'],
+        "discount_value": coupon_doc['discount_value'],
+        "calculated_discount": discount,
+        "description": coupon_doc.get('description')
+    }
+
+@api_router.get("/admin/coupons")
+async def get_all_coupons(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    coupons = await db.coupons.find({}, {'_id': 0}).to_list(100)
+    return coupons
+
+@api_router.post("/admin/coupons")
+async def create_coupon(coupon_data: dict, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    coupon = Coupon(
+        code=coupon_data['code'].upper(),
+        description=coupon_data.get('description'),
+        discount_type=coupon_data.get('discount_type', 'percentage'),
+        discount_value=coupon_data['discount_value'],
+        min_order_amount=coupon_data.get('min_order_amount', 0),
+        max_discount=coupon_data.get('max_discount'),
+        usage_limit=coupon_data.get('usage_limit'),
+        valid_from=datetime.fromisoformat(coupon_data['valid_from']),
+        valid_until=datetime.fromisoformat(coupon_data['valid_until']),
+        is_active=coupon_data.get('is_active', True)
+    )
+    
+    coupon_dict = coupon.model_dump()
+    coupon_dict['created_at'] = coupon_dict['created_at'].isoformat()
+    coupon_dict['valid_from'] = coupon_dict['valid_from'].isoformat()
+    coupon_dict['valid_until'] = coupon_dict['valid_until'].isoformat()
+    
+    await db.coupons.insert_one(coupon_dict)
+    return coupon_dict
+
+@api_router.put("/admin/coupons/{coupon_id}")
+async def update_coupon(coupon_id: str, coupon_data: dict, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = {k: v for k, v in coupon_data.items() if v is not None}
+    if 'code' in update_data:
+        update_data['code'] = update_data['code'].upper()
+    
+    await db.coupons.update_one({'id': coupon_id}, {'$set': update_data})
+    coupon = await db.coupons.find_one({'id': coupon_id}, {'_id': 0})
+    return coupon
+
+@api_router.delete("/admin/coupons/{coupon_id}")
+async def delete_coupon(coupon_id: str, current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.coupons.delete_one({'id': coupon_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Coupon not found")
+    
+    return {"message": "Coupon deleted successfully"}
 
 # ============= PRODUCT ROUTES =============
 
