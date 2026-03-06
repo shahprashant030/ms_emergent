@@ -46,11 +46,30 @@ security = HTTPBearer()
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    phone: str
+    phone: Optional[str] = None
     name: Optional[str] = None
     email: Optional[str] = None
+    picture: Optional[str] = None  # Google profile picture
     address: Optional[str] = None
+    city: Optional[str] = None
     role: str = "customer"
+    auth_provider: str = "phone"  # "phone" or "google"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class Coupon(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    code: str
+    description: Optional[str] = None
+    discount_type: str = "percentage"  # "percentage" or "fixed"
+    discount_value: float
+    min_order_amount: float = 0
+    max_discount: Optional[float] = None  # Max discount for percentage coupons
+    usage_limit: Optional[int] = None
+    used_count: int = 0
+    valid_from: datetime
+    valid_until: datetime
+    is_active: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class OTPStore(BaseModel):
