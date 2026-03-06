@@ -221,7 +221,63 @@ class OrderCreate(BaseModel):
     shipping_address: str
     phone: str
     name: str
+    email: Optional[str] = None
     notes: Optional[str] = None
+    payment_method: str = "cod"
+    coupon_code: Optional[str] = None
+    discount_amount: float = 0
+
+# ============= TWILIO SMS CONFIG =============
+# Add your Twilio credentials here
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
+TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '')
+
+async def send_sms(to_phone: str, message: str):
+    """Send SMS via Twilio - returns True if sent, False otherwise"""
+    if not all([TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER]):
+        logging.warning("Twilio credentials not configured. SMS not sent.")
+        return False
+    
+    try:
+        from twilio.rest import Client
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        
+        # Format Nepal phone number if needed
+        if not to_phone.startswith('+'):
+            if to_phone.startswith('9'):
+                to_phone = '+977' + to_phone
+            else:
+                to_phone = '+' + to_phone
+        
+        message = client.messages.create(
+            body=message,
+            from_=TWILIO_PHONE_NUMBER,
+            to=to_phone
+        )
+        logging.info(f"SMS sent to {to_phone}: {message.sid}")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to send SMS: {str(e)}")
+        return False
+
+async def send_order_notification(order: dict, notification_type: str = "placed"):
+    """Send order notification SMS"""
+    phone = order.get('phone')
+    order_number = order.get('order_number')
+    name = order.get('name', 'Customer')
+    
+    messages = {
+        "placed": f"Hi {name}! Your order #{order_number} has been placed successfully. Total: NPR {order.get('total')}. Thank you for shopping with Mithila Sutra!",
+        "confirmed": f"Hi {name}! Your order #{order_number} has been confirmed and is being prepared. Thank you!",
+        "packed": f"Hi {name}! Your order #{order_number} has been packed and is ready for shipping.",
+        "shipped": f"Hi {name}! Great news! Your order #{order_number} is on its way. Track your delivery!",
+        "delivered": f"Hi {name}! Your order #{order_number} has been delivered. Enjoy your purchase from Mithila Sutra!",
+        "cancelled": f"Hi {name}! Your order #{order_number} has been cancelled. If you have questions, please contact us."
+    }
+    
+    message = messages.get(notification_type, messages["placed"])
+    await send_sms(phone, message)
 
 # ============= HELPER FUNCTIONS =============
 
