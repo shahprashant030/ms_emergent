@@ -9,6 +9,12 @@ import CheckoutPage from '@/pages/CheckoutPage';
 import ProfilePage from '@/pages/ProfilePage';
 import OrdersPage from '@/pages/OrdersPage';
 import AdminDashboard from '@/pages/AdminDashboard';
+import AboutPage from '@/pages/AboutPage';
+import ContactPage from '@/pages/ContactPage';
+import FAQPage from '@/pages/FAQPage';
+import TermsPage from '@/pages/TermsPage';
+import PrivacyPage from '@/pages/PrivacyPage';
+import AuthCallback from '@/pages/AuthCallback';
 import { AuthProvider } from '@/context/AuthContext';
 import { CartProvider } from '@/context/CartContext';
 
@@ -26,6 +32,12 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
           </Routes>
           <Toaster position="top-center" />
         </BrowserRouter>
