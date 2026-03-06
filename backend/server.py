@@ -168,13 +168,15 @@ class Order(BaseModel):
     subtotal: float
     discount: float = 0.0
     total: float
-    payment_method: str = "COD"
+    payment_method: str = "cod"
     payment_status: str = "pending"
     order_status: str = "pending"
     shipping_address: str
     phone: str
     name: str
+    email: Optional[str] = None
     notes: Optional[str] = None
+    coupon_code: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
