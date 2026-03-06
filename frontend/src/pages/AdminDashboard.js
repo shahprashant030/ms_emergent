@@ -81,7 +81,7 @@ const AdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [statsRes, ordersRes, productsRes, categoriesRes, customersRes, adminsRes, carouselsRes] = await Promise.all([
+      const [statsRes, ordersRes, productsRes, categoriesRes, customersRes, adminsRes, carouselsRes, couponsRes] = await Promise.all([
         axios.get(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/admin/orders`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/products`),
@@ -89,6 +89,7 @@ const AdminDashboard = () => {
         axios.get(`${API}/admin/customers`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/admin/admins`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/admin/carousels`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/admin/coupons`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
       setStats(statsRes.data);
       setOrders(ordersRes.data);
@@ -97,6 +98,7 @@ const AdminDashboard = () => {
       setCustomers(customersRes.data);
       setAdmins(adminsRes.data);
       setCarousels(carouselsRes.data);
+      setCoupons(couponsRes.data);
     } catch (error) {
       console.error('Failed to fetch admin data:', error);
       toast.error('Failed to load admin data');
